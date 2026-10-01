@@ -1,0 +1,35 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "vScribe",
+  "mainBinaryName": "vscribe",
+  "identifier": "io.github.vscribe",
+  "build": {
+    "frontendDist": "../src/splash"
+  },
+  "app": {
+    "windows": [],
+    "security": {
+      "csp": null
+    },
+    "withGlobalTauri": true
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "deb"
+    ],
+    "category": "Productivity",
+    "publisher": "vScribe contributors",
+    "copyright": "© 2026 vScribe contributors",
+    "license": "MIT",
+    "shortDescription": "Convert audio and voice notes to text",
+    "longDescription": "vScribe converts audio recordings and voice notes into text you can copy, search and export. Transcription runs locally with OpenAI's open Whisper models, so audio never leaves your computer.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

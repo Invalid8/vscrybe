@@ -1,0 +1,21 @@
+{% from "_macros.html" import icon %}
+<div id="title-{{ current.id }}" class="title-wrap"{% if oob %} hx-swap-oob="true"{% endif %}
+     x-data='{ editing: false, original: {{ current.title|tojson }}, draft: "" }'>
+  <div class="title-view" :hidden="editing">
+    <h1 class="title-text">{{ current.title or store.title(current)|truncate(80) }}</h1>
+    <button class="icon-btn title-edit" type="button" title="Rename session" aria-label="Rename session"
+            @click="draft = original; editing = true; $nextTick(() => { $refs.field.focus(); $refs.field.select() })">{{ icon("pencil") }}</button>
+  </div>
+  <form class="title-form" hidden :hidden="!editing" hx-post="/sessions/{{ current.id }}/title" hx-swap="none"
+        @submit="editing = false" @keydown.escape.stop="editing = false">
+    <textarea x-ref="field" name="title" rows="2" maxlength="80" x-model="draft" aria-label="Session name"
+              placeholder="{{ store.title(current)|truncate(80) }}"
+              @keydown.enter.prevent="$el.form.requestSubmit()"></textarea>
+    <div class="title-form-bar">
+      <span class="title-count" :class="draft.length >= 80 && 'is-full'" x-text="`${draft.length} / 80`">0 / 80</span>
+      <span class="title-hint">Leave empty to use the transcript</span>
+      <button class="btn small" type="button" @click="editing = false">Cancel</button>
+      <button class="btn small primary" type="submit">Save</button>
+    </div>
+  </form>
+</div>

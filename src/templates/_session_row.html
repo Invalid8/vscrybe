@@ -1,0 +1,32 @@
+{% from "_macros.html" import icon %}
+{% set notes = store.notes(session.id) %}
+{% set busy = notes|selectattr("active")|list %}
+<li id="srow-{{ session.id }}" class="note{% if busy %} is-running{% endif %}"
+    x-data="{ editing: false }"
+    :class="{ 'is-selected': session === '{{ session.id }}', 'is-editing': editing }"
+    {% if oob %}hx-swap-oob="true"{% endif %}
+    {% if busy %}hx-get="/sessions/{{ session.id }}/row" hx-trigger="every 1s [!document.querySelector('.note.is-editing')]" hx-swap="outerHTML"
+    hx-on::before-swap="event.detail.shouldSwap = !document.querySelector('.note.is-editing')"{% endif %}>
+  <button class="note-hit" type="button" x-show="!editing"
+          hx-get="/sessions/{{ session.id }}" hx-target="#detail" hx-push-url="/?s={{ session.id }}"
+          @click="drawer = false">
+    <span class="note-title">{{ store.title(session)|truncate(80) }}</span>
+    <span class="note-meta">
+      {% if busy %}
+        <span class="live-dot" aria-hidden="true"></span><span>Transcribing {{ notes|length - busy|length }} of {{ notes|length }}</span>
+      {% else %}
+        <span>{{ notes|length }} note{{ "s" if notes|length != 1 }}</span><span>{{ store.last_activity(session)|when }}</span>
+      {% endif %}
+    </span>
+  </button>
+  <button class="note-rename" type="button" x-show="!editing" title="Rename" aria-label="Rename session"
+          @click="editing = true; $nextTick(() => { $refs.name.focus(); $refs.name.select() })">{{ icon("pencil") }}</button>
+  <div class="note-edit" hidden :hidden="!editing">
+    <input x-ref="name" name="title" value="{{ session.title }}" placeholder="{{ store.title(session)|truncate(60) }}"
+           aria-label="Session name" autocomplete="off" maxlength="80"
+           hx-post="/sessions/{{ session.id }}/title" hx-trigger="change" hx-swap="none"
+           @keydown.enter.prevent="$el.blur()"
+           @keydown.escape.stop="$el.value = $el.defaultValue; $el.blur()"
+           @blur="editing = false">
+  </div>
+</li>

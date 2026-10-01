@@ -1,0 +1,6 @@
+{% with oob = true %}
+  {% include "_session_row.html" %}
+  {% with current = session %}{% include "_title.html" %}{% endwith %}
+{% endwith %}
+{% with current = session, bar_oob = true %}{% include "_meta.html" %}{% include "_bar.html" %}
+{% endwith %}

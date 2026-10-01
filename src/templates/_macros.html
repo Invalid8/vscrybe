@@ -1,0 +1,146 @@
+{% macro icon(name, cls="") -%}
+<svg class="icon {{ cls }}" aria-hidden="true"><use href="#i-{{ name }}"/></svg>
+{%- endmacro %}
+
+{% macro bars(count=5, cls="") -%}
+<span class="bars {{ cls }}" aria-hidden="true">{% for _ in range(count) %}<i></i>{% endfor %}</span>
+{%- endmacro %}
+
+{% macro art_empty() -%}
+<svg class="art" viewBox="0 0 360 220" aria-hidden="true">
+  <g class="art-spark">
+    <path d="M42 30 l4 10 10 4 -10 4 -4 10 -4 -10 -10 -4 10 -4z"/>
+    <path d="M326 180 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z"/>
+    <circle cx="176" cy="38" r="4"/>
+    <path d="M214 176 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"/>
+  </g>
+
+  <g transform="translate(18 74)">
+    <path class="art-card" d="M34 0 h110 a34 34 0 0 1 0 68 h-110 a34 34 0 0 1 -21 -7.5 l-13 7.5 4 -16 a34 34 0 0 1 30 -52z"/>
+    <g class="art-play">
+      <circle class="art-accent" cx="34" cy="34" r="17"/>
+      <path class="art-ink-fill" d="M29 26 l13 8 -13 8z"/>
+    </g>
+    <g class="art-wave art-recording">
+      <path d="M64 34 v0"/><path d="M73 27 v14"/><path d="M82 20 v28"/><path d="M91 29 v10"/>
+      <path d="M100 23 v22"/><path d="M109 16 v36"/><path d="M118 26 v16"/><path d="M127 30 v8"/>
+      <path d="M136 24 v20"/><path d="M145 31 v6"/>
+    </g>
+  </g>
+
+  <path class="art-dash" d="M186 108 C 206 84, 214 132, 232 110"/>
+  <path class="art-line" d="M226 104 l7 6 -8 5"/>
+
+  <g transform="translate(242 34)">
+    <rect class="art-card" x="0" y="0" width="100" height="136" rx="12"/>
+    <rect class="art-accent art-highlight" x="10" y="45" width="78" height="14" rx="4"/>
+    <g class="art-text">
+      <path d="M16 24 h52"/><path d="M16 52 h58"/><path d="M16 80 h68"/>
+      <path d="M16 94 h44"/><path d="M16 108 h60"/>
+    </g>
+    <g class="art-stamp">
+      <path d="M78 24 h6"/><path d="M84 80 h0"/>
+    </g>
+  </g>
+</svg>
+{%- endmacro %}
+
+{% macro art_list() -%}
+<svg class="art art-small" viewBox="0 0 160 96" aria-hidden="true">
+  <rect class="art-card art-faded" x="30" y="10" width="112" height="34" rx="17"/>
+  <rect class="art-card" x="18" y="34" width="124" height="44" rx="22"/>
+  <circle class="art-accent" cx="40" cy="56" r="11"/>
+  <path class="art-ink-fill" d="M37 51 l8 5 -8 5z"/>
+  <g class="art-wave">
+    <path d="M60 56 v0"/><path d="M68 50 v12"/><path d="M76 46 v20"/><path d="M84 52 v8"/>
+    <path d="M92 48 v16"/><path d="M100 44 v24"/><path d="M108 51 v10"/><path d="M116 54 v4"/><path d="M124 50 v12"/>
+  </g>
+</svg>
+{%- endmacro %}
+
+{% macro art_mic() -%}
+<svg class="art art-consent" viewBox="0 0 200 120" aria-hidden="true">
+  <g class="art-rings">
+    <circle cx="100" cy="56" r="34"/>
+    <circle cx="100" cy="56" r="48"/>
+  </g>
+  <rect class="art-accent" x="86" y="22" width="28" height="48" rx="14"/>
+  <path class="art-line" d="M76 54 a24 24 0 0 0 48 0"/>
+  <path class="art-line" d="M100 78 v14 M88 94 h24"/>
+  <g class="art-spark">
+    <path d="M36 30 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z"/>
+    <path d="M164 86 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"/>
+  </g>
+</svg>
+{%- endmacro %}
+
+{% macro art_files() -%}
+<svg class="art art-consent" viewBox="0 0 200 120" aria-hidden="true">
+  <path class="art-card" d="M52 44 h30 l8 9 h58 a8 8 0 0 1 8 8 v43 a8 8 0 0 1 -8 8 h-96 a8 8 0 0 1 -8 -8 v-52 a8 8 0 0 1 8 -8z"/>
+  <g class="art-dropping">
+    <rect class="art-card" x="84" y="10" width="32" height="40" rx="5"/>
+    <g class="art-wave"><path d="M93 30 v0"/><path d="M98 25 v10"/><path d="M103 22 v16"/><path d="M108 27 v6"/></g>
+  </g>
+  <path class="art-accent" d="M44 70 h112 v34 a8 8 0 0 1 -8 8 h-96 a8 8 0 0 1 -8 -8z"/>
+  <g class="art-spark">
+    <path d="M30 26 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z"/>
+    <path d="M170 40 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"/>
+  </g>
+</svg>
+{%- endmacro %}
+
+{% macro art_private() -%}
+<svg class="art" viewBox="0 0 360 200" aria-hidden="true">
+  <g class="art-spark">
+    <path d="M60 40 l4 10 10 4 -10 4 -4 10 -4 -10 -10 -4 10 -4z"/>
+    <path d="M300 150 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z"/>
+    <circle cx="292" cy="40" r="4"/>
+  </g>
+  <rect class="art-card" x="96" y="36" width="168" height="108" rx="12"/>
+  <path class="art-card" d="M76 150 h208 l-10 16 h-188z"/>
+  <g class="art-text"><path d="M118 62 h60"/><path d="M118 80 h96"/><path d="M118 98 h78"/><path d="M118 116 h88"/></g>
+  <g class="art-shield">
+    <path class="art-accent" d="M226 70 l30 -11 30 11 v26 c0 20 -14 33 -30 40 c-16 -7 -30 -20 -30 -40z"/>
+    <path class="art-check" d="M242 97 l10 10 19 -21"/>
+  </g>
+</svg>
+{%- endmacro %}
+
+{% macro picker(name, options, value, label, id="", model="", up=false) -%}
+<div class="picker{% if up %} is-up{% endif %}" x-data='picker({{ options|tojson }}, {{ value|tojson }})'
+     {% if model %}x-modelable="value" x-model="{{ model }}"{% endif %}
+     @keydown.escape.stop="open = false" @click.outside="open = false">
+  <input type="hidden" name="{{ name }}"{% if id %} id="{{ id }}"{% endif %} value="{{ value }}" :value="value">
+  <button class="picker-btn" type="button" x-ref="button" @click="toggle()" aria-haspopup="listbox" :aria-expanded="open" aria-label="{{ label }}">
+    <span x-text="text()">{{ options[value] }}</span>{{ icon("chevron-down", "picker-chevron") }}
+  </button>
+  <div class="picker-list" role="listbox" aria-label="{{ label }} options" hidden :hidden="!open"
+       @keydown.arrow-down.prevent="move(1)" @keydown.arrow-up.prevent="move(-1)">
+    <template x-for="[key, text] in entries" :key="key">
+      <button class="picker-option" type="button" role="option" :aria-selected="key === value" @click="choose(key)">
+        <span x-text="text"></span>{{ icon("check", "picker-check") }}
+      </button>
+    </template>
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro art_archive() -%}
+<svg class="art art-consent" viewBox="0 0 200 120" aria-hidden="true">
+  <g class="art-dropping">
+    <rect class="art-card" x="62" y="12" width="30" height="38" rx="5"/>
+    <g class="art-text"><path d="M70 24 h14"/><path d="M70 32 h10"/></g>
+  </g>
+  <g class="art-dropping is-late">
+    <rect class="art-card" x="104" y="6" width="30" height="38" rx="5"/>
+    <g class="art-text"><path d="M112 18 h14"/><path d="M112 26 h10"/></g>
+  </g>
+  <rect class="art-card" x="46" y="56" width="108" height="18" rx="5"/>
+  <path class="art-accent" d="M52 74 h96 v28 a8 8 0 0 1 -8 8 h-80 a8 8 0 0 1 -8 -8z"/>
+  <path class="art-line" d="M88 88 h24"/>
+  <g class="art-spark">
+    <path d="M30 26 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z"/>
+    <path d="M170 40 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"/>
+  </g>
+</svg>
+{%- endmacro %}

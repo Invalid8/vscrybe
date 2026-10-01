@@ -1,0 +1,13 @@
+{% from "_macros.html" import icon, art_empty %}
+<div class="empty" x-init="session = null">
+  {{ art_empty() }}
+  <h2>Drop voice notes to start a session.</h2>
+  <p>Add one or many recordings or voice notes. They're transcribed together in one session, and you can add more later.</p>
+  <ul class="formats">
+    {% for ext in ["opus", "ogg", "m4a", "mp3", "wav", "amr", "aac"] %}<li>.{{ ext }}</li>{% endfor %}
+  </ul>
+</div>
+{% if partial %}{% with current = none, bar_oob = true %}{% include "_meta.html" %}{% include "_bar.html" %}{% endwith %}{% endif %}
+{% if refresh_side %}
+  {% with side_oob = true %}{% include "_sessions.html" %}{% endwith %}
+{% endif %}

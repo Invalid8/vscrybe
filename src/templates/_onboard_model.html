@@ -1,0 +1,15 @@
+{% from "_macros.html" import icon %}
+{% set m = model_status("small") %}
+<div class="onboard-model{% if m.ready %} is-ready{% endif %}"
+     {% if m.downloading %}hx-get="/models/onboard" hx-trigger="every 1s" hx-swap="outerHTML"{% endif %}>
+  {% if m.ready %}
+    <span class="onboard-model-icon">{{ icon("check") }}</span><span>The Fast model is ready. You're all set.</span>
+  {% elif m.downloading %}
+    <span>Downloading the Fast model{% if m.total_mb %} ({{ m.total_mb }} MB){% endif %}… <b>{{ (m.progress * 100)|round|int }}%</b></span>
+    <div class="meter"><span style="--p: {{ m.progress }}"></span></div>
+  {% elif m.error %}
+    <span>{{ m.error }}</span>
+  {% else %}
+    <span>The Fast model will download the first time you transcribe.</span>
+  {% endif %}
+</div>

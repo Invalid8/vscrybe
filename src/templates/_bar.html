@@ -1,0 +1,20 @@
+{% from "_macros.html" import icon %}
+<div id="bar-slot" class="bar-slot"{% if bar_oob %} hx-swap-oob="true"{% endif %}>
+  {% if current %}
+    {% set notes = store.notes(current.id) %}
+    {% set total = notes|selectattr("transcript")|map(attribute="transcript.duration")|sum %}
+    <div class="compact" x-show="compact" x-cloak x-data="{ copied: false }">
+      <button class="compact-title" type="button" title="Back to top"
+              @click="$refs.reader.scrollTo({ top: 0, behavior: 'smooth' })">{{ current.title or store.title(current)|truncate(60) }}</button>
+      <span class="compact-meta">{{ notes|length }} note{{ "s" if notes|length != 1 }}{% if total %} · {{ total|clock }}{% endif %}</span>
+      <span class="compact-actions">
+        <button class="btn small primary" type="button" title="Copy all transcripts"
+                @click="if (await copySession('{{ current.id }}')) { copied = true; setTimeout(() => copied = false, 1400) }">
+          <span x-show="!copied">{{ icon("copy") }}</span><span x-show="copied" x-cloak>{{ icon("check") }}</span>
+          <span class="compact-label" x-text="copied ? 'Copied' : 'Copy all'">Copy all</span>
+        </button>
+        <a class="btn small icon-only" href="/sessions/{{ current.id }}/download" title="Download session as .txt" aria-label="Download session as .txt">{{ icon("download") }}</a>
+      </span>
+    </div>
+  {% endif %}
+</div>

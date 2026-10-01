@@ -1,0 +1,35 @@
+{% from "_macros.html" import icon %}
+{% set notes = store.notes(current.id) %}
+<div class="session" x-init="session = '{{ current.id }}'; toBottom(); syncScroll()" x-data="{ confirming: false, copied: false }">
+  <header class="session-head">
+    {% include "_title.html" %}
+    <div class="session-bar">
+      {% include "_doc_meta.html" %}
+      <div class="session-actions">
+        <button class="btn primary" type="button"
+                @click="if (await copySession('{{ current.id }}')) { copied = true; setTimeout(() => copied = false, 1400) }">
+          <span x-show="!copied">{{ icon("copy") }}</span><span x-show="copied" x-cloak>{{ icon("check") }}</span>
+          <span x-text="copied ? 'Copied' : 'Copy all'">Copy all</span>
+        </button>
+        <a class="btn icon-only" href="/sessions/{{ current.id }}/download" title="Download session as .txt" aria-label="Download session as .txt">{{ icon("download") }}</a>
+        <button class="btn icon-only danger" type="button" x-show="!confirming" @click="confirming = true" title="Delete session" aria-label="Delete session">{{ icon("trash-2") }}</button>
+        <button class="btn danger-solid" type="button" x-show="confirming" x-cloak @click.outside="confirming = false"
+                hx-delete="/sessions/{{ current.id }}" hx-target="#detail">{{ icon("trash-2") }}<span>Delete session</span></button>
+      </div>
+    </div>
+  </header>
+
+  <div class="thread">
+    {% for job in notes %}
+      {% include "_note.html" %}
+    {% endfor %}
+  </div>
+</div>
+{% if partial %}
+  {% include "_meta.html" %}
+  {% with bar_oob = true %}{% include "_bar.html" %}{% endwith %}
+{% endif %}
+{% if refresh_side %}
+  {% with side_oob = true %}{% include "_sessions.html" %}{% endwith %}
+  {% with queue_oob = true %}{% include "_queue.html" %}{% endwith %}
+{% endif %}

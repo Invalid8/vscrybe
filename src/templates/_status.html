@@ -1,0 +1,18 @@
+{% from "_macros.html" import bars %}
+{% if job.active %}
+<div class="status" hx-get="/notes/{{ job.id }}/status" hx-trigger="every 1s" hx-swap="outerHTML">
+  {{ bars(7, "is-moving is-large") }}
+  <div class="status-body">
+    <p class="status-line">
+      {% set model = model_status(job.model) %}
+      {% if job.status == "running" %}Transcribing <b>{{ (job.progress * 100)|round|int }}%</b>
+      {% elif model.downloading %}Waiting for the {{ model.label }} model to download <b>{{ (model.progress * 100)|round|int }}%</b>
+      {% else %}Waiting in queue{% endif %}
+    </p>
+    <div class="meter"><span style="--p: {{ job.progress }}"></span></div>
+    <p class="status-hint">You can listen while it works. The text appears here when it's done.</p>
+  </div>
+</div>
+{% else %}
+<div hidden hx-get="/notes/{{ job.id }}" hx-trigger="load" hx-target="#note-{{ job.id }}" hx-swap="outerHTML"></div>
+{% endif %}

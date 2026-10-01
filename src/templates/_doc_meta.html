@@ -1,0 +1,8 @@
+{% from "_macros.html" import icon %}
+{% set notes = store.notes(current.id) %}
+{% set total = notes|selectattr("transcript")|map(attribute="transcript.duration")|sum %}
+<ul id="doc-meta" class="doc-meta"{% if meta_oob %} hx-swap-oob="true"{% endif %}>
+  <li>{{ icon("file-audio") }}{{ notes|length }} voice note{{ "s" if notes|length != 1 }}</li>
+  {% if total %}<li>{{ icon("clock") }}{{ total|clock }} total</li>{% endif %}
+  <li>{{ icon("clock") }}Started {{ current.created|when }}</li>
+</ul>

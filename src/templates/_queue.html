@@ -1,0 +1,15 @@
+{% from "_macros.html" import bars %}
+{% set active = store.active %}
+{% if partial %}{% with banner_oob = true %}{% include "_models.html" %}{% endwith %}{% endif %}
+<div id="queue" class="queue{% if active %} is-active{% endif %}"
+     {% if active %}hx-get="/queue" hx-trigger="every 1s" hx-swap="outerHTML"{% endif %}
+     {% if queue_oob %}hx-swap-oob="true"{% endif %}>
+  {% if active %}
+    <div class="queue-line">
+      {{ bars(4, "is-moving") }}
+      <span>Converting <b>{{ [store.batch_done + 1, store.batch_total]|min }}</b> of <b>{{ store.batch_total }}</b></span>
+      <span class="queue-pct">{{ (store.batch_progress * 100)|round|int }}%</span>
+    </div>
+    <div class="meter"><span style="--p: {{ store.batch_progress }}"></span></div>
+  {% endif %}
+</div>

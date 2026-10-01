@@ -1,0 +1,19 @@
+{% if current %}
+  {% set notes = store.notes(current.id) %}
+  {% set first = notes|selectattr("transcript")|first %}
+  {% set page_title = (current.title or store.title(current)|truncate(60)) ~ " · vScribe" %}
+  {% set page_description = notes|length ~ " voice note" ~ ("s" if notes|length != 1 else "") ~ " transcribed on this computer"
+       ~ (": " ~ first.result.text|truncate(140) if first and first.result.text else ".") %}
+  {% set page_path = "/?s=" ~ current.id %}
+{% else %}
+  {% set page_title = "New session · vScribe" if partial else "vScribe · Convert audio and voice notes to text" %}
+  {% set page_description = "Convert audio and voice notes to text on your own computer. Nothing is uploaded anywhere." %}
+  {% set page_path = "/" %}
+{% endif %}
+{% set meta_oob = ' hx-swap-oob="true"'|safe if partial else "" %}
+{% if not partial %}<title>{{ page_title }}</title>{% endif %}
+<meta id="meta-description" name="description" content="{{ page_description }}"{{ meta_oob }}>
+<meta id="meta-og-title" property="og:title" content="{{ page_title }}"{{ meta_oob }}>
+<meta id="meta-og-description" property="og:description" content="{{ page_description }}"{{ meta_oob }}>
+<meta id="meta-og-url" property="og:url" content="{{ base_url }}{{ page_path }}"{{ meta_oob }}>
+<link id="meta-canonical" rel="canonical" href="{{ base_url }}{{ page_path }}"{{ meta_oob }}>

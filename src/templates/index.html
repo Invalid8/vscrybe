@@ -1,0 +1,310 @@
+{% from "_macros.html" import icon, art_empty, art_mic, art_files, art_private, art_archive, picker %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% include "_meta.html" %}
+  <meta name="application-name" content="vScribe">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="htmx-config" content='{"attributesToSettle": ["style", "width", "height"]}'>
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#ecebea" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="vScribe">
+  <meta property="og:image" content="{{ base_url }}/static/icons/icon-512.png">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="/static/icons/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/static/icons/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <script>
+    try {
+      const theme = localStorage.getItem("vscribe-theme");
+      if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+    } catch {}
+  </script>
+  <link rel="preload" href="/static/fonts/onest-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/fonts/onest-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/fonts/bricolage-grotesque-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/static/app.css">
+  <script>window.VN = {{ {"dataDir": data_dir, "logFile": log_file, "version": version}|tojson }};</script>
+  <script src="/static/app.js"></script>
+  <script src="/static/htmx.min.js" defer></script>
+  <script src="/static/alpine.min.js" defer></script>
+</head>
+<body x-data="app()"
+      :class="{ 'rail-closed': !railOpen, 'drawer-open': drawer }"
+      @dragenter.prevent="depth++"
+      @dragleave="depth--"
+      @dragover.prevent
+      @drop.prevent="drop($event)"
+      @keydown.escape.window="drawer = false"
+      @toast.window="notify($event.detail.message, $event.detail.kind)">
+  <script>
+    try {
+      if (localStorage.getItem("vscribe-rail") === "closed") document.body.classList.add("rail-closed");
+    } catch {}
+  </script>
+  {% include "_icons.svg" %}
+
+  <form id="upload" hidden hx-post="/upload" hx-encoding="multipart/form-data" hx-include="#model, #language, #session-id"
+        hx-target="#detail" hx-on::after-request="this.reset()">
+    <input id="send-files" type="file" name="files" multiple>
+  </form>
+  <input id="pick-files" type="file" hidden multiple accept="audio/*,.opus,.ogg,.oga,.m4a,.amr,.3gp,.webm,.wav"
+         @change="stage($el.files); $el.value = ''">
+  <input id="pick-folder" type="file" hidden webkitdirectory multiple @change="stage($el.files); $el.value = ''">
+  <input id="session-id" type="hidden" name="session" :value="session || ''">
+
+  <aside class="side">
+    <div class="side-top" data-tauri-drag-region>
+      <a class="brand" href="/">
+        <span class="brand-mark">{{ icon("audio-lines") }}</span>
+        <span>vScribe</span>
+      </a>
+      <button class="icon-btn" type="button" @click="toggleRail()" title="Close sidebar" aria-label="Close sidebar">
+        {{ icon("panel-left-close") }}
+      </button>
+    </div>
+
+    <nav class="side-actions">
+      <a class="side-item is-strong" href="/" hx-get="/new" hx-target="#detail" hx-push-url="/" @click="drawer = false">
+        <span class="side-plus">{{ icon("plus") }}</span>
+        New session
+      </a>
+      <a class="side-item" href="/export.zip" :href="'/export.zip?q=' + encodeURIComponent(query)" @click.prevent="exportAll($el.href)"
+         title="Download every transcript in the list as a zip, one folder per session">
+        {{ icon("archive") }}
+        Export transcripts
+      </a>
+    </nav>
+
+    <label class="search">
+      {{ icon("search") }}
+      <input type="search" name="q" x-model="query" placeholder="Search sessions" autocomplete="off"
+             hx-get="/sessions" hx-trigger="input changed delay:200ms, search" hx-target="#sessions" hx-swap="outerHTML">
+    </label>
+
+    {% include "_queue.html" %}
+
+    <p class="side-label">Sessions</p>
+    <div class="side-list">{% include "_sessions.html" %}</div>
+
+    <div class="side-foot">
+      <button class="theme-btn" type="button" @click="cycleTheme()" :title="themeLabel + ' · click to change'" :aria-label="themeLabel + ', click to change'">
+        <span x-show="theme === 'light'" x-cloak>{{ icon("sun") }}</span>
+        <span x-show="theme === 'dark'" x-cloak>{{ icon("moon") }}</span>
+        <span x-show="theme !== 'light' && theme !== 'dark'">{{ icon("monitor") }}</span>
+        <span x-text="themeLabel">System theme</span>
+      </button>
+      <button class="icon-btn" type="button" @click="$refs.about.showModal()" title="About vScribe" aria-label="About vScribe">{{ icon("info") }}</button>
+    </div>
+
+  </aside>
+
+  <div class="scrim" @click="drawer = false"></div>
+
+  <main class="main">
+    <header class="main-bar" :class="session && compact && 'is-compact'" data-tauri-drag-region>
+      <button class="icon-btn open-rail" type="button" @click="toggleRail()" title="Open sidebar" aria-label="Open sidebar">
+        {{ icon("panel-left-open") }}
+      </button>
+      <a class="brand main-brand" href="/">
+        <span class="brand-mark">{{ icon("audio-lines") }}</span>
+        <span>vScribe</span>
+      </a>
+      {% include "_bar.html" %}
+      <div class="window-controls" x-show="desktop" x-cloak>
+        <button class="window-btn" type="button" @click="windowAction('minimize')" title="Minimize" aria-label="Minimize">{{ icon("minus") }}</button>
+        <button class="window-btn" type="button" @click="windowAction('toggleMaximize')" title="Maximize" aria-label="Maximize">{{ icon("square") }}</button>
+        <button class="window-btn is-close" type="button" @click="windowAction('close')" title="Close" aria-label="Close">{{ icon("x") }}</button>
+      </div>
+    </header>
+    <section id="detail" class="reader" x-ref="reader" @scroll.passive="syncScroll()">
+      {% if current %}{% include "_session.html" %}{% else %}{% include "_empty.html" %}{% endif %}
+    </section>
+
+    <footer class="dock">
+      {% include "_models.html" %}
+      <button class="to-bottom" type="button" x-show="session && !atBottom" x-cloak x-transition.opacity.duration.150ms
+              @click="toBottom('smooth')" title="Jump to the latest" aria-label="Jump to the latest">{{ icon("arrow-down") }}</button>
+      <div class="composer" x-data="recorder()" @keydown.escape.window="recording && cancel()">
+        <div class="tray" x-show="staged.length && !recording" x-cloak>
+          <template x-for="item in staged" :key="item.id">
+            <div class="chip">
+              <button class="chip-icon" type="button" @click="togglePreview(item)"
+                      :title="previewing === item.id ? 'Stop' : 'Listen'"
+                      :aria-label="(previewing === item.id ? 'Stop ' : 'Listen to ') + item.file.name">
+                <span x-show="previewing !== item.id">{{ icon("play") }}</span><span x-show="previewing === item.id" x-cloak>{{ icon("pause") }}</span>
+              </button>
+              <span class="chip-name" x-text="item.file.name" :title="item.file.name"></span>
+              <span class="chip-meta" x-text="item.recorded ? clock(item.recorded) : fileSize(item.file.size)"></span>
+              <button class="chip-remove" type="button" @click="unstage(item.id)" :aria-label="'Remove ' + item.file.name" title="Remove">{{ icon("x") }}</button>
+            </div>
+          </template>
+        </div>
+        <div class="composer-row" x-show="!recording">
+        <button class="composer-plus" type="button" @click="pickFiles()" title="Add voice notes" aria-label="Add voice notes">{{ icon("plus") }}</button>
+        <button class="composer-field" type="button" @click="pickFiles()">
+          <span x-text="staged.length ? `${staged.length} ready to send · add more or press send` : session ? 'Add more voice notes to this session…' : 'Add voice notes to start a session…'">Add voice notes to start a session…</span>
+        </button>
+        <div class="composer-end">
+          <div class="composer-model" title="The language spoken in the voice notes">
+            {{ picker("language", languages, "en", "Language", id="language", model="language", up=true) }}
+          </div>
+          <div class="composer-model" title="Fast suits most voice notes. Accurate is slower but better with heavy accents and noise.">
+            {{ picker("model", models, "small", "Model", id="model", model="model", up=true) }}
+          </div>
+          <button class="icon-btn composer-folder" type="button" @click="pickFolder()" title="Convert a whole folder" aria-label="Convert a whole folder">{{ icon("folder-plus") }}</button>
+          <button class="icon-btn composer-mic" type="button" @click="start()" title="Record a voice note" aria-label="Record a voice note">{{ icon("mic") }}</button>
+          <button class="composer-go" type="button" x-show="!staged.length" @click="pickFiles()" title="Choose files" aria-label="Choose files">{{ icon("upload") }}</button>
+          <button class="composer-go is-send" type="button" x-show="staged.length" x-cloak @click="send()" title="Send to transcribe" aria-label="Send">{{ icon("arrow-up") }}</button>
+        </div>
+        </div>
+        <div class="composer-rec" x-show="recording" x-cloak>
+          <button class="icon-btn rec-cancel" type="button" @click="cancel()" title="Discard recording (Esc)" aria-label="Discard recording">{{ icon("x") }}</button>
+          <span class="rec-dot" :class="paused && 'is-paused'" aria-hidden="true"></span>
+          <span class="rec-time" x-text="clock(seconds)" aria-live="off">0:00</span>
+          <canvas class="rec-wave" x-ref="wave" aria-hidden="true"></canvas>
+          <button class="icon-btn rec-pause" type="button" @click="togglePause()" :title="paused ? 'Resume' : 'Pause'" :aria-label="paused ? 'Resume recording' : 'Pause recording'">
+            <span x-show="!paused">{{ icon("pause") }}</span><span x-show="paused" x-cloak>{{ icon("mic") }}</span>
+          </button>
+          <button class="composer-go" type="button" @click="finish()" title="Stop and add to the list" aria-label="Stop recording">{{ icon("check") }}</button>
+        </div>
+      </div>
+      <p class="dock-note">Runs entirely on this computer.<span class="dock-extra"> You can also drop files anywhere.</span></p>
+    </footer>
+  </main>
+
+  <dialog class="about consent" x-ref="consent" @close="closeConsent($el.returnValue === 'allow')">
+    <form method="dialog" class="about-card">
+      <div x-show="consent?.kind === 'mic'">{{ art_mic() }}</div>
+      <div x-show="consent?.kind === 'files'">{{ art_files() }}</div>
+      <h2 x-text="consent?.title"></h2>
+      <p x-text="consent?.body"></p>
+      <ul class="consent-points">
+        <template x-for="point in consent?.points ?? []">
+          <li>{{ icon("check") }}<span x-text="point"></span></li>
+        </template>
+      </ul>
+      <div class="consent-actions">
+        <button class="btn" value="deny">Not now</button>
+        <button class="btn primary" value="allow" autofocus><span x-text="consent?.allow"></span></button>
+      </div>
+      <p class="consent-note">You'll only be asked once. Your choice stays on this computer.</p>
+    </form>
+  </dialog>
+
+  <dialog class="onboard" x-ref="onboarding" @cancel.prevent="finishOnboarding()"
+          @keydown.right="onboarding < 3 && onboarding++" @keydown.left="onboarding > 0 && onboarding--">
+    <div class="onboard-card">
+      <header class="onboard-head">
+        <span class="onboard-step" x-text="`${onboarding + 1} of 4`">1 of 4</span>
+        <button class="onboard-skip" type="button" :class="onboarding === 3 && 'is-hidden'" @click="finishOnboarding()">Skip</button>
+      </header>
+
+      <section class="onboard-slide" x-show="onboarding === 0">
+        <div class="onboard-visual">{{ art_empty() }}</div>
+        <h2>Voice notes to text, right on your computer.</h2>
+        <p>Drop in recordings, interviews or voice notes and get clean, searchable text, usually in about the time it takes to play them.</p>
+      </section>
+
+      <section class="onboard-slide" x-show="onboarding === 1" x-cloak>
+        <div class="onboard-visual onboard-shot">
+          <img class="shot shot-light" src="/static/onboarding/add-light.webp" alt="The add bar recording a voice note, with a live waveform">
+          <img class="shot shot-dark" src="/static/onboarding/add-dark.webp" alt="The add bar recording a voice note, with a live waveform">
+        </div>
+        <h2>Drop files, pick a folder, or just talk.</h2>
+        <p>Drag voice notes anywhere onto the window, convert a whole folder at once, or press the mic to record a new one.</p>
+      </section>
+
+      <section class="onboard-slide" x-show="onboarding === 2" x-cloak>
+        <div class="onboard-visual onboard-shot">
+          <img class="shot shot-light" src="/static/onboarding/session-light.webp" alt="A session with two transcribed voice notes and timestamps">
+          <img class="shot shot-dark" src="/static/onboarding/session-dark.webp" alt="A session with two transcribed voice notes and timestamps">
+        </div>
+        <h2>Each batch becomes a session.</h2>
+        <p>Click a timestamp to hear that exact line, copy everything in one go, or export the lot as text files.</p>
+      </section>
+
+      <section class="onboard-slide" x-show="onboarding === 3" x-cloak>
+        <div class="onboard-visual">{{ art_private() }}</div>
+        <h2>Nothing leaves this computer.</h2>
+        <p>Transcription runs locally with open Whisper models. After a one-time model download it works fully offline.</p>
+        <div hx-get="/models/onboard" hx-trigger="load" hx-swap="outerHTML"></div>
+      </section>
+
+      <footer class="onboard-nav">
+        <div class="onboard-dots">
+          <template x-for="i in 4">
+            <button type="button" :class="onboarding === i - 1 && 'is-active'" @click="onboarding = i - 1" :aria-label="'Go to card ' + i"></button>
+          </template>
+        </div>
+        <button class="btn" type="button" x-show="onboarding > 0" @click="onboarding--">Back</button>
+        <button class="btn primary" type="button" x-show="onboarding < 3" @click="onboarding++" autofocus><span>Next</span></button>
+        <button class="btn primary" type="button" x-show="onboarding === 3" x-cloak @click="finishOnboarding()"><span>Get started</span></button>
+      </footer>
+    </div>
+  </dialog>
+
+  <dialog class="about" x-ref="about" @click.self="$el.close()">
+    <div class="about-card">
+      <button class="icon-btn about-close" type="button" @click="$refs.about.close()" aria-label="Close">{{ icon("x") }}</button>
+      <span class="brand-mark">{{ icon("audio-lines") }}</span>
+      <h2>vScribe</h2>
+      <p class="about-version">Version {{ version }}</p>
+      <p>Converts audio recordings and voice notes into text you can copy, search and export. You can also record straight from the add bar.</p>
+      <p>Everything runs on this computer with OpenAI's open Whisper models. Audio and transcripts never leave it.</p>
+      <dl class="about-facts">
+        <div><dt>Models</dt><dd>Fast (small) · Accurate (large-v3-turbo)</dd></div>
+        <div><dt>Formats</dt><dd>opus, ogg, m4a, mp3, wav, amr, aac, webm</dd></div>
+        <div><dt>Saved in</dt><dd>{{ data_dir }}</dd></div>
+      </dl>
+      <h3>Found a problem?</h3>
+      <p>Send an email describing what happened and what you expected. Your app version and browser are filled in for you.</p>
+      <button class="btn about-intro" type="button" @click="$refs.about.close(); onboarding = 0; $refs.onboarding.showModal()">{{ icon("play") }}<span>Show the intro again</span></button>
+      <a class="btn primary" :href="reportLink('b.fadamitan2019@gmail.com', '{{ version }}')" href="mailto:b.fadamitan2019@gmail.com">{{ icon("mail") }}<span>Report an issue</span></a>
+    </div>
+  </dialog>
+
+  <div class="busy" x-show="busy" x-cloak x-transition.opacity.duration.150ms role="status" aria-live="polite">
+    <div class="busy-card">
+      <div class="busy-art" :class="busy && 'is-' + busy.kind">
+        <template x-if="busy?.kind === 'upload'">{{ art_files() }}</template>
+        <template x-if="busy?.kind === 'export'">{{ art_archive() }}</template>
+      </div>
+      <div class="busy-body">
+        <p class="busy-title" x-text="busy?.title"></p>
+        <p class="busy-detail" x-text="busy?.detail"></p>
+        <div class="meter" :class="busy?.progress == null && 'is-indeterminate'"><span :style="`--p: ${busy?.progress ?? 0.3}`"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toasts" role="status" aria-live="polite">
+    <template x-for="item in toasts" :key="item.id">
+      <div class="toast" :class="'is-' + item.kind" x-transition.opacity.duration.150ms>
+        <span class="toast-icon">
+          <template x-if="item.kind === 'error'">{{ icon("triangle-alert") }}</template>
+          <template x-if="item.kind !== 'error'">{{ icon("check") }}</template>
+        </span>
+        <p x-text="item.message"></p>
+        <template x-if="item.action">
+          <button class="btn small" type="button" @click="item.action.run(); dismiss(item.id)" x-text="item.action.label"></button>
+        </template>
+        <button class="icon-btn" type="button" @click="dismiss(item.id)" aria-label="Dismiss">{{ icon("x") }}</button>
+      </div>
+    </template>
+  </div>
+
+  <div class="dropzone" x-show="depth > 0" x-cloak x-transition.opacity.duration.120ms>
+    <div class="dropzone-card">
+      <span class="dropzone-icon">{{ icon("upload") }}</span>
+      <p x-text="session ? 'Add to this session' : 'Start a new session'">Start a new session</p>
+      <small>They wait below until you press send</small>
+    </div>
+  </div>
+</body>
+</html>

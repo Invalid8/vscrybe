@@ -1,0 +1,61 @@
+[package]
+name = "vscribe"
+version = "0.2.0"
+description = "Convert audio and voice notes to text, on your own computer"
+authors = ["vScribe contributors <b.fadamitan2019@gmail.com>"]
+license = "MIT"
+edition = "2024"
+
+[lib]
+name = "vscribe_lib"
+crate-type = ["rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-single-instance = "2"
+gstreamer = "0.25"
+gstreamer-app = "0.25"
+gstreamer-pbutils = "0.25"
+thiserror = "2"
+ct2rs = { version = "0.10.1", default-features = false, features = ["whisper", "mkl", "dnnl", "openmp-runtime-comp"] }
+tokenizers = "0.22"
+mel_spec = "0.3"
+rustfft = "6"
+axum = { version = "0.8", features = ["multipart"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "io-std"] }
+tower-http = { version = "0.6", features = ["fs"] }
+minijinja = { version = "2", features = ["loader", "json", "preserve_order"] }
+minijinja-contrib = { version = "2", features = ["pycompat"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
+zip = { version = "2", default-features = false, features = ["deflate"] }
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+dirs = "6"
+uuid = { version = "1", features = ["v4"] }
+clap = { version = "4", features = ["derive"] }
+log = "0.4"
+simplelog = "0.12"
+percent-encoding = "2"
+rust-embed = { version = "8", features = ["mime-guess"] }
+tower = { version = "0.5", features = ["util"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+webkit2gtk = "2"
+
+[profile.dev]
+opt-level = 1
+strip = "debuginfo"
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

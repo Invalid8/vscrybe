@@ -1,0 +1,99 @@
+{% from "_macros.html" import icon, picker %}
+{% set result = job.result %}
+<article id="note-{{ job.id }}" class="vn is-{{ job.status }}"
+         x-data='reader({{ job.id|tojson }}, {{ (result.text if result else "")|tojson }}, {{ (result.timestamped if result else "")|tojson }}, {{ result.duration if result else (job.duration or 0) }})'>
+  <header class="vn-head">
+    <span class="vn-name">{{ job.name }}</span>
+    <span class="vn-meta">
+      {% if result %}<span>{{ result.language|upper }}</span><span>{{ models[job.model] }} · {{ job.elapsed }}s</span>{% endif %}
+      <span>{{ job.created|when }}</span>
+    </span>
+  </header>
+
+  {% if job.status != "failed" %}
+  <div class="player">
+    <button class="play" type="button" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play'">
+      <span x-show="!playing">{{ icon("play") }}</span>
+      <span x-show="playing" x-cloak>{{ icon("pause") }}</span>
+    </button>
+    <input class="scrub" type="range" min="0" step="0.1" aria-label="Seek"
+           :max="duration" :value="now" :style="`--fill: ${duration ? now / duration * 100 : 0}%`"
+           @input="$refs.audio.currentTime = $event.target.value">
+    <span class="time"><span x-text="clock(now)">0:00</span> / <span x-text="clock(duration)">{{ (result.duration if result else (job.duration or 0))|clock }}</span></span>
+    <audio x-ref="audio" preload="metadata" src="/notes/{{ job.id }}/audio"
+           @timeupdate="now = $el.currentTime"
+           @durationchange="isFinite($el.duration) && $el.duration > 0 && (duration = $el.duration)"
+           @play="playing = true" @pause="playing = false" @error="audioFailed()"></audio>
+  </div>
+  {% endif %}
+
+  {% if job.active %}
+    {% include "_status.html" %}
+  {% elif job.status == "failed" %}
+    <div class="status is-failed">
+      <span class="status-icon">{{ icon("triangle-alert") }}</span>
+      <div class="status-body">
+        <p class="status-line">Couldn't transcribe this file.</p>
+        <p class="status-hint"><code>{{ job.error }}</code></p>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if result %}
+    <div class="transcript">
+      {% for s in result.segments %}
+        <p class="seg" :class="now > 0 && now >= {{ s.start }} && now < {{ s.end }} && 'is-live'">
+          <button class="stamp" type="button" @click="seek({{ s.start }})" title="Play from here">{{ icon("play") }}{{ s.start|clock }}</button>
+          <span class="seg-text">{{ s.text }}</span>
+        </p>
+      {% else %}
+        <p class="seg-none">No speech was detected in this recording.</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <footer class="vn-tools">
+    {% if result %}
+      <button class="btn small" type="button" @click="copy(plain, 'plain')">
+        <span x-show="copied !== 'plain'">{{ icon("copy") }}</span><span x-show="copied === 'plain'" x-cloak>{{ icon("check") }}</span>
+        <span x-text="copied === 'plain' ? 'Copied' : 'Copy'">Copy</span>
+      </button>
+      <button class="btn small" type="button" @click="copy(stamped, 'stamped')">
+        <span x-show="copied !== 'stamped'">{{ icon("clock") }}</span><span x-show="copied === 'stamped'" x-cloak>{{ icon("check") }}</span>
+        <span x-text="copied === 'stamped' ? 'Copied' : 'With times'">With times</span>
+      </button>
+      <a class="btn small icon-only" href="/notes/{{ job.id }}/download" title="Download .txt" aria-label="Download .txt">{{ icon("download") }}</a>
+    {% endif %}
+    <span class="vn-tools-end" x-data="{ menu: false }" @keydown.escape.stop="menu = false; confirming = false"
+          @click.outside="menu = false; confirming = false">
+      <button class="btn small icon-only" type="button" @click="menu = !menu" :aria-expanded="menu" aria-haspopup="true"
+              title="More options" aria-label="More options">{{ icon("ellipsis-vertical") }}</button>
+      <div class="menu" hidden :hidden="!menu">
+        {% if not job.active %}
+          <form class="menu-redo" hx-post="/notes/{{ job.id }}/retry" hx-target="#note-{{ job.id }}" hx-swap="outerHTML">
+            <p class="menu-label">Transcribe again</p>
+            <div class="menu-row">
+              {{ picker("model", models, models|list|select("ne", job.model)|first, "Model for redo") }}
+              {{ picker("language", languages, job.language, "Language for redo") }}
+            </div>
+            <button class="btn small" type="submit">{{ icon("refresh-cw") }}<span>Redo</span></button>
+          </form>
+          <hr class="menu-sep">
+        {% endif %}
+        <button class="menu-item is-danger" type="button" x-show="!confirming" @click="confirming = true">{{ icon("trash-2") }}<span>Remove from session</span></button>
+        <button class="menu-item is-confirm" type="button" x-show="confirming" x-cloak
+                hx-delete="/notes/{{ job.id }}" hx-target="#detail">{{ icon("trash-2") }}<span>Remove</span></button>
+      </div>
+    </span>
+  </footer>
+</article>
+{% if refresh_row %}
+  {% with session = store.sessions[job.session], oob = true %}{% include "_session_row.html" %}{% endwith %}
+  {% with queue_oob = true %}{% include "_queue.html" %}{% endwith %}
+{% endif %}
+{% if refresh_meta %}
+  {% with current = store.sessions[job.session], meta_oob = true, bar_oob = true %}
+    {% include "_doc_meta.html" %}
+    {% include "_bar.html" %}
+  {% endwith %}
+{% endif %}

@@ -1,0 +1,23 @@
+{% from "_macros.html" import icon, bars %}
+<div id="model-banner" class="model-banner"
+     {% if model_downloads|selectattr("downloading")|list %}hx-get="/models/banner" hx-trigger="every 1s" hx-swap="outerHTML"{% endif %}
+     {% if banner_oob %}hx-swap-oob="true"{% endif %}>
+  {% for m in model_downloads %}
+    {% if m.error %}
+      <div class="banner is-error">
+        <span class="banner-icon">{{ icon("triangle-alert") }}</span>
+        <p>{{ m.error }}</p>
+        <button class="btn small" type="button" hx-post="/models/{{ m.name }}/download" hx-target="#model-banner" hx-swap="outerHTML">{{ icon("refresh-cw") }}<span>Retry</span></button>
+      </div>
+    {% else %}
+      <div class="banner">
+        {{ bars(4, "is-moving") }}
+        <div class="banner-body">
+          <p>Getting the {{ m.label }} model ready<span class="banner-extra"> · one-time download{% if m.total_mb %} of {{ m.total_mb }} MB{% endif %}</span></p>
+          <div class="meter"><span style="--p: {{ m.progress }}"></span></div>
+        </div>
+        <span class="banner-pct">{{ (m.progress * 100)|round|int }}%</span>
+      </div>
+    {% endif %}
+  {% endfor %}
+</div>

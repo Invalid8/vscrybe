@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=vScribe
+GenericName=Audio Transcriber
+Comment={{comment}}
+Exec={{exec}}
+Icon={{icon}}
+StartupWMClass={{exec}}
+Categories=AudioVideo;Audio;Utility;
+Keywords=transcribe;transcription;audio;voice;notes;whisper;speech;text;
+Terminal=false

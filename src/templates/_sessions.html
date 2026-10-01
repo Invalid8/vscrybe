@@ -1,0 +1,16 @@
+{% from "_macros.html" import art_list %}
+<ul id="sessions" class="notes"{% if side_oob %} hx-swap-oob="true"{% endif %}>
+  {% for session in sessions %}
+    {% include "_session_row.html" %}
+  {% else %}
+    <li class="notes-empty">
+      {{ art_list() }}
+      {% if query %}
+        <p>Nothing matches “{{ query }}”.</p>
+      {% else %}
+        <p>No sessions yet.</p>
+        <small>Each batch of voice notes you add becomes a session.</small>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>

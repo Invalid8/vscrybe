@@ -1,0 +1,6 @@
+/node_modules/
+
+__pycache__/
+.pytest_cache/
+test-results/
+/tests/e2e/.venv/
