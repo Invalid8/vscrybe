@@ -923,18 +923,35 @@ body.rail-closed .main-brand { display: inline-flex; }
 /* Onboarding */
 
 .onboard {
-  width: min(640px, calc(100vw - 32px));
-  max-height: calc(100dvh - 32px);
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
   padding: 0;
+  border: 0;
+  background: rgb(0 0 0 / 0.45);
+  backdrop-filter: blur(6px);
+  color: var(--ink);
+}
+.onboard[open] { display: flex; flex-direction: column; align-items: center; }
+.onboard::backdrop { background: none; }
+.onboard-chrome { display: flex; justify-content: flex-end; align-self: stretch; flex: none; min-height: 60px; padding: 10px 16px; }
+.onboard-chrome .window-controls { border-left: 0; }
+.onboard-card {
+  display: flex;
+  flex-direction: column;
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100dvh - 92px);
+  margin: auto 0;
+  overflow-y: auto;
+  padding: 20px 32px 24px;
   border: 1px solid var(--line);
   border-radius: 24px;
   background: var(--surface);
-  color: var(--ink);
   box-shadow: var(--gloss-raised), 0 30px 80px rgb(0 0 0 / 0.35);
 }
-.onboard::backdrop { background: rgb(0 0 0 / 0.45); backdrop-filter: blur(6px); }
-.onboard[open] { animation: rise 0.22s ease-out; }
-.onboard-card { display: flex; flex-direction: column; padding: 20px 32px 24px; }
+.onboard[open] .onboard-card { animation: rise 0.22s ease-out; }
 .onboard-head { display: flex; align-items: center; justify-content: space-between; min-height: 32px; margin-bottom: 14px; }
 .onboard-step { font: 13px var(--mono); color: var(--faint); }
 .onboard-skip {
@@ -1090,7 +1107,7 @@ body.rail-closed .main-brand { display: inline-flex; }
 @media (prefers-reduced-motion: reduce) {
   .bars.is-moving i, .live-dot, .art-spark > *, .art-highlight, .rec-dot, .art-play, .art-recording path, .art-rings circle, .art-dropping, .art-check, .art-shield { animation: none; }
   .meter span, .side { transition: none; }
-  .onboard-slide, .onboard[open], .about[open] { animation: none; }
+  .onboard-slide, .onboard[open] .onboard-card, .about[open] { animation: none; }
 }
 
 /* Picker (custom select) */

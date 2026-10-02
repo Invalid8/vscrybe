@@ -1,4 +1,4 @@
-{% from "_macros.html" import icon, art_empty, art_mic, art_files, art_private, art_archive, picker %}
+{% from "_macros.html" import icon, window_controls, art_empty, art_mic, art_files, art_private, art_archive, picker %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -116,11 +116,7 @@
         <span>vScribe</span>
       </a>
       {% include "_bar.html" %}
-      <div class="window-controls" x-show="desktop" x-cloak>
-        <button class="window-btn" type="button" @click="windowAction('minimize')" title="Minimize" aria-label="Minimize">{{ icon("minus") }}</button>
-        <button class="window-btn" type="button" @click="windowAction('toggleMaximize')" title="Maximize" aria-label="Maximize">{{ icon("square") }}</button>
-        <button class="window-btn is-close" type="button" @click="windowAction('close')" title="Close" aria-label="Close">{{ icon("x") }}</button>
-      </div>
+      {{ window_controls() }}
     </header>
     <section id="detail" class="reader" x-ref="reader" @scroll.passive="syncScroll()">
       {% if current %}{% include "_session.html" %}{% else %}{% include "_empty.html" %}{% endif %}
@@ -199,6 +195,7 @@
 
   <dialog class="onboard" x-ref="onboarding" @cancel.prevent="finishOnboarding()"
           @keydown.right="onboarding < 3 && onboarding++" @keydown.left="onboarding > 0 && onboarding--">
+    <div class="onboard-chrome" data-tauri-drag-region>{{ window_controls() }}</div>
     <div class="onboard-card">
       <header class="onboard-head">
         <span class="onboard-step" x-text="`${onboarding + 1} of 4`">1 of 4</span>

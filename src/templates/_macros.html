@@ -2,6 +2,14 @@
 <svg class="icon {{ cls }}" aria-hidden="true"><use href="#i-{{ name }}"/></svg>
 {%- endmacro %}
 
+{% macro window_controls() -%}
+<div class="window-controls" x-show="desktop" x-cloak>
+  <button class="window-btn" type="button" @click="windowAction('minimize')" title="Minimize" aria-label="Minimize">{{ icon("minus") }}</button>
+  <button class="window-btn" type="button" @click="windowAction('toggleMaximize')" title="Maximize" aria-label="Maximize">{{ icon("square") }}</button>
+  <button class="window-btn is-close" type="button" @click="windowAction('close')" title="Close" aria-label="Close">{{ icon("x") }}</button>
+</div>
+{%- endmacro %}
+
 {% macro bars(count=5, cls="") -%}
 <span class="bars {{ cls }}" aria-hidden="true">{% for _ in range(count) %}<i></i>{% endfor %}</span>
 {%- endmacro %}
