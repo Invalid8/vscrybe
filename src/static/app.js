@@ -62,6 +62,7 @@ function app() {
             event.preventDefault();
             location.reload();
           }
+          if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "a") selectWithin(event);
         });
       }
       if (this.onboarding !== null) this.$nextTick(() => this.$refs.onboarding.showModal());
@@ -536,6 +537,16 @@ function picker(options, value) {
       options[(at + step + options.length) % options.length]?.focus();
     },
   };
+}
+
+const SELECT_ALL_SCOPE = ".transcript, .status-hint, [role=alert], .toast, .banner, .about-facts";
+
+function selectWithin(event) {
+  if (event.target.closest("input, textarea, [contenteditable]")) return;
+  event.preventDefault();
+  const selection = window.getSelection();
+  const scope = selection.anchorNode?.parentElement?.closest(SELECT_ALL_SCOPE);
+  if (scope) selection.selectAllChildren(scope);
 }
 
 function chooseModelFolder() {
