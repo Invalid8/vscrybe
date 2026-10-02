@@ -47,13 +47,4 @@ esac
 make -j"$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)"
 make install
 
-case "$(uname -s)" in
-  MINGW* | MSYS* | CYGWIN*)
-    for lib in "$prefix"/lib/lib*.a; do
-      name=$(basename "$lib" .a)
-      cp "$lib" "$prefix/lib/${name#lib}.lib"
-    done
-    ;;
-esac
-
 echo "$version" > "$prefix/VERSION"
