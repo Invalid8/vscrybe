@@ -5485,25 +5485,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-plugin-notification"
-version = "2.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "533770889abb60a0407d5a32096182f0e6463f5a3dfaa675be94580aa14070e1"
-dependencies = [
- "log",
- "notify-rust",
- "rand 0.9.5",
- "serde",
- "serde_json",
- "serde_repr",
- "tauri",
- "tauri-plugin",
- "thiserror 2.0.21",
- "time",
- "url",
-]
-
-[[package]]
 name = "tauri-plugin-opener"
 version = "2.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6243,6 +6224,7 @@ dependencies = [
  "mel_spec",
  "minijinja",
  "minijinja-contrib",
+ "notify-rust",
  "percent-encoding",
  "reqwest 0.12.28",
  "rust-embed",
@@ -6253,7 +6235,6 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
- "tauri-plugin-notification",
  "tauri-plugin-opener",
  "tauri-plugin-single-instance",
  "thiserror 2.0.21",

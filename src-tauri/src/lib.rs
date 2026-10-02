@@ -10,7 +10,6 @@ use std::thread;
 use simplelog::{ColorChoice, CombinedLogger, ConfigBuilder, LevelFilter, TermLogger, TerminalMode, WriteLogger};
 use tauri::webview::DownloadEvent;
 use tauri::{AppHandle, Manager, Url, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
-use tauri_plugin_notification::NotificationExt;
 
 use engine::store::{Batch, Store};
 
@@ -120,8 +119,32 @@ fn notify_finished(app: &AppHandle, batch: Batch) {
         failed if failed == batch.total => ("Transcription failed", format!("Couldn't transcribe {}. Open the app to see why.", notes(failed))),
         failed => ("Transcription finished", format!("{} ready, {failed} couldn't be transcribed.", notes(batch.total - failed))),
     };
-    if let Err(error) = app.notification().builder().title(title).body(body).show() {
-        log::warn!("Couldn't show a notification: {error}");
+    let app = app.clone();
+    thread::spawn(move || {
+        let shown = notify_rust::Notification::new()
+            .appname("vScribe")
+            .summary(title)
+            .body(&body)
+            .icon("vscribe")
+            .hint(notify_rust::Hint::DesktopEntry("vscribe".into()))
+            .action("default", "Open vScribe")
+            .show();
+        match shown {
+            Ok(notification) => notification.wait_for_action(|action| {
+                if action == "default" {
+                    bring_to_front(&app);
+                }
+            }),
+            Err(error) => log::warn!("Couldn't show a notification: {error}"),
+        }
+    });
+}
+
+fn bring_to_front(app: &AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.unminimize();
+        let _ = window.show();
+        let _ = window.set_focus();
     }
 }
 
@@ -132,15 +155,9 @@ fn js(value: &str) -> String {
 pub fn run() {
     setup_logging();
     tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, _, _| {
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.unminimize();
-                let _ = window.set_focus();
-            }
-        }))
+        .plugin(tauri_plugin_single_instance::init(|app, _, _| bring_to_front(app)))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_notification::init())
         .setup(|app| {
             let started = startup_problem().map_or_else(open_store, Err).and_then(|store| {
                 let handle = app.handle().clone();

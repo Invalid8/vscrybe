@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "The window shows pages from the app's own loopback server; they may control the window, reveal downloads, show notifications and ask for a folder.",
+  "description": "The window shows pages from the app's own loopback server; they may control the window, reveal downloads and ask for a folder.",
   "windows": [
     "main"
   ],
