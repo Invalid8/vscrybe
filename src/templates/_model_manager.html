@@ -1,0 +1,64 @@
+{% from "_macros.html" import icon, picker %}
+<div id="model-manager" class="model-manager">
+  <ul class="model-list">
+    {% for m in model_list %}
+      <li class="model-row" x-data="{ sure: false }">
+        <div class="model-row-body">
+          <b>{{ m.label }}</b>
+          <span class="model-row-meta">{{ m.place }}{% if not m.ready %} · downloads on first use{% endif %}</span>
+        </div>
+        {% if not m.builtin %}
+          <button class="btn small" type="button" x-show="!sure" @click="sure = true">Remove</button>
+          <button class="btn small is-danger" type="button" x-show="sure" x-cloak
+                  hx-delete="/models/{{ m.name }}" hx-target="#model-manager" hx-swap="outerHTML"
+                  @htmx:after-request="if (model === '{{ m.name }}') model = 'small'">Remove {{ m.label }}</button>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+
+  <form class="model-add" hx-post="/models" hx-target="#model-manager" hx-swap="outerHTML" hx-disabled-elt="find button[type=submit]" hx-disinherit="*"
+        x-data='{{ (adding or {"from": "hub", "repo": "", "folder": "", "name": ""})|tojson }}'>
+    <h3>Add a model</h3>
+    <p>Any Whisper model in CTranslate2 (faster-whisper) format.</p>
+    <div class="model-from" role="radiogroup" aria-label="Add from">
+      <button type="button" role="radio" :aria-checked="from === 'hub'" @click="from = 'hub'">Hugging Face</button>
+      <button type="button" role="radio" :aria-checked="from === 'folder'" @click="from = 'folder'">This computer</button>
+    </div>
+
+    <div class="model-source" x-show="from === 'hub'">
+      <label class="field">
+        <span>Search Hugging Face</span>
+        <input type="search" name="q" placeholder="Search model names, such as african" autocomplete="off" spellcheck="false"
+               hx-get="/models/offers" hx-trigger="input changed delay:400ms, search" hx-target="#model-offers" hx-sync="this:replace"
+               @keydown.enter.prevent>
+      </label>
+      <div id="model-offers" class="model-offers" hx-get="/models/offers" hx-trigger="intersect once" aria-live="polite">
+        <p class="model-offers-note">Loading suggestions…</p>
+      </div>
+      <input type="hidden" name="repo" :value="repo" :disabled="from !== 'hub'">
+    </div>
+
+    <div class="model-source" x-show="from === 'folder'" x-cloak>
+      <div class="field-row" x-show="desktop">
+        <input :value="folder" placeholder="No folder chosen" aria-label="Model folder" readonly>
+        <button class="btn small" type="button" @click="chooseModelFolder().then((path) => { if (path) { folder = path; name = path.split('/').filter(Boolean).pop() } })">{{ icon("folder-open") }}<span>Choose folder…</span></button>
+      </div>
+      <p x-show="!desktop">Folders are added in the vScribe desktop app, or from a terminal with <code>vscribe models add /path/to/model --name "My model"</code>.</p>
+      <input type="hidden" name="folder" :value="folder" :disabled="from !== 'folder'">
+    </div>
+
+    <label class="field" x-show="from === 'hub' ? repo : folder" x-cloak>
+      <span>Name in the picker</span>
+      <input name="name" x-model="name" placeholder="My model" maxlength="40" required autocomplete="off">
+    </label>
+    {% if error %}<p class="model-add-error" role="alert">{{ error }}</p>{% endif %}
+    <button class="btn primary" type="submit" :disabled="from === 'hub' ? !repo : !folder">{{ icon("plus") }}<span>Add model</span></button>
+  </form>
+</div>
+{% if changed %}
+  <div id="model-picker" class="composer-model" hx-swap-oob="true" title="Fast suits most voice notes. Accurate is slower but better with heavy accents and noise.">
+    {{ picker("model", models, "small", "Model", id="model", model="model", up=true, action="Manage models…") }}
+  </div>
+  {% with banner_oob = true %}{% include "_models.html" %}{% endwith %}
+{% endif %}

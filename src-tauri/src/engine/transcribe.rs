@@ -70,7 +70,7 @@ impl Engine {
         Ok(Self {
             first_timestamp: id("<|notimestamps|>")? + 1,
             end_of_text: id("<|endoftext|>")?,
-            log_mel: LogMel::load(&folder)?,
+            log_mel: LogMel::load(&folder, whisper.n_mels())?,
             whisper,
             tokenizer,
             model: model.into(),

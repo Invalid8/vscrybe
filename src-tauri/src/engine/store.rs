@@ -329,6 +329,7 @@ impl Store {
 
     fn work(self, pending: Receiver<String>) {
         let mut engines: HashMap<String, Engine> = HashMap::new();
+        let mut revision = models::revision();
         match Engine::load(models::DEFAULT) {
             Ok(engine) => {
                 engines.insert(models::DEFAULT.into(), engine);
@@ -339,6 +340,10 @@ impl Store {
             let Some(job) = self.lock().jobs.get(&id).cloned() else {
                 continue;
             };
+            if models::revision() != revision {
+                revision = models::revision();
+                engines.retain(|name, _| models::is_builtin(name));
+            }
             let started = now();
             let result = (|| {
                 if !engines.contains_key(&job.model) {

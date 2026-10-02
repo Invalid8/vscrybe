@@ -139,6 +139,7 @@ pub fn run() {
             }
         }))
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
         .setup(|app| {
             let started = startup_problem().map_or_else(open_store, Err).and_then(|store| {

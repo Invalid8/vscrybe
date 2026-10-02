@@ -150,8 +150,8 @@
           <div class="composer-model" title="The language spoken in the voice notes">
             {{ picker("language", languages, "en", "Language", id="language", model="language", up=true) }}
           </div>
-          <div class="composer-model" title="Fast suits most voice notes. Accurate is slower but better with heavy accents and noise.">
-            {{ picker("model", models, "small", "Model", id="model", model="model", up=true) }}
+          <div id="model-picker" class="composer-model" title="Fast suits most voice notes. Accurate is slower but better with heavy accents and noise.">
+            {{ picker("model", models, "small", "Model", id="model", model="model", up=true, action="Manage models…") }}
           </div>
           <button class="icon-btn composer-folder" type="button" @click="pickFolder()" title="Convert a whole folder" aria-label="Convert a whole folder">{{ icon("folder-plus") }}</button>
           <button class="icon-btn composer-mic" type="button" @click="start()" title="Record a voice note" aria-label="Record a voice note">{{ icon("mic") }}</button>
@@ -243,6 +243,16 @@
         <button class="btn primary" type="button" x-show="onboarding < 3" @click="onboarding++" autofocus><span>Next</span></button>
         <button class="btn primary" type="button" x-show="onboarding === 3" x-cloak @click="finishOnboarding()"><span>Get started</span></button>
       </footer>
+    </div>
+  </dialog>
+
+  <dialog class="about models-dialog" x-ref="models" @click.self="$el.close()"
+          @picker-action.window="$event.detail === 'model' && $el.showModal()">
+    <div class="about-card">
+      <button class="icon-btn about-close" type="button" @click="$refs.models.close()" title="Close" aria-label="Close">{{ icon("x") }}</button>
+      <h2>Models</h2>
+      <p>Fast and Accurate are built in. Add others, such as a model fine-tuned for your language or accent.</p>
+      {% include "_model_manager.html" %}
     </div>
   </dialog>
 

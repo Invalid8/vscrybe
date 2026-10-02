@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "The window shows pages from the app's own loopback server; they may control the window, reveal downloads and show notifications.",
+  "description": "The window shows pages from the app's own loopback server; they may control the window, reveal downloads, show notifications and ask for a folder.",
   "windows": [
     "main"
   ],
@@ -16,6 +16,7 @@
     "core:window:allow-toggle-maximize",
     "core:window:allow-close",
     "core:window:allow-start-dragging",
-    "opener:allow-reveal-item-in-dir"
+    "opener:allow-reveal-item-in-dir",
+    "dialog:allow-open"
   ]
 }

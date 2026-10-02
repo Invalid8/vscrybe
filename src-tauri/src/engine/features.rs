@@ -26,10 +26,14 @@ pub struct LogMel {
 }
 
 impl LogMel {
-    pub fn load(model: &Path) -> Result<Self, String> {
+    pub fn load(model: &Path, n_mels: usize) -> Result<Self, String> {
         let file = model.join("preprocessor_config.json");
-        let text = std::fs::read_to_string(&file).map_err(|e| format!("Couldn't read {}: {e}", file.display()))?;
-        let config: PreprocessorConfig = serde_json::from_str(&text).map_err(|e| format!("Bad {}: {e}", file.display()))?;
+        let config = if file.is_file() {
+            let text = std::fs::read_to_string(&file).map_err(|e| format!("Couldn't read {}: {e}", file.display()))?;
+            serde_json::from_str(&text).map_err(|e| format!("Bad {}: {e}", file.display()))?
+        } else {
+            PreprocessorConfig { feature_size: n_mels, sampling_rate: 16_000, mel_filters: None }
+        };
         let filters = match config.mel_filters {
             Some(rows) => rows.into_iter().flatten().map(|v| v as f32).collect(),
             None => mel_spec::mel::mel(config.sampling_rate as f64, N_FFT, config.feature_size, None, None, false, true)

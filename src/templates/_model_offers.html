@@ -1,0 +1,22 @@
+{% if error %}
+  <p class="model-offers-note" role="alert">{{ error }}</p>
+{% elif not offers %}
+  <p class="model-offers-note">No Whisper models in CTranslate2 format match “{{ query }}”.</p>
+{% else %}
+  <p class="model-offers-title">{{ "Results" if query else "Suggested" }}</p>
+  <ul>
+    {% for o in offers %}
+      <li>
+        <button class="model-offer" type="button" data-repo="{{ o.repo }}" {% if o.problem or o.added %}disabled{% endif %}
+                :aria-pressed="repo === $el.dataset.repo" @click="repo = $el.dataset.repo; name = repo.split('/').pop()">
+          <b>{{ o.repo }}</b>
+          <span class="model-row-meta">
+            {%- if o.added %}Added
+            {%- elif o.problem %}{{ o.problem }}
+            {%- else %}{{ [o.note, (o.size_mb ~ " MB") if o.size_mb else ""]|select|join(" · ") }}{% endif -%}
+          </span>
+        </button>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}

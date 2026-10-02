@@ -114,7 +114,7 @@
 </svg>
 {%- endmacro %}
 
-{% macro picker(name, options, value, label, id="", model="", up=false) -%}
+{% macro picker(name, options, value, label, id="", model="", up=false, action="") -%}
 <div class="picker{% if up %} is-up{% endif %}" x-data='picker({{ options|tojson }}, {{ value|tojson }})'
      {% if model %}x-modelable="value" x-model="{{ model }}"{% endif %}
      @keydown.escape.stop="open = false" @click.outside="open = false">
@@ -129,6 +129,11 @@
         <span x-text="text"></span>{{ icon("check", "picker-check") }}
       </button>
     </template>
+    {% if action %}
+      <button class="picker-option picker-action" type="button" @click="open = false; $dispatch('picker-action', '{{ name }}')">
+        <span>{{ action }}</span>{{ icon("cpu") }}
+      </button>
+    {% endif %}
   </div>
 </div>
 {%- endmacro %}

@@ -538,6 +538,10 @@ function picker(options, value) {
   };
 }
 
+function chooseModelFolder() {
+  return window.__TAURI__.dialog.open({ directory: true, title: "Choose a model folder" });
+}
+
 async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text);

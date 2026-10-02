@@ -23,7 +23,7 @@ enum Command {
     Transcribe {
         #[arg(required = true)]
         paths: Vec<PathBuf>,
-        /// small (Fast) or large-v3-turbo (Accurate)
+        /// small (Fast), large-v3-turbo (Accurate), or a model you added (see `vscribe models`)
         #[arg(short, long, default_value = models::DEFAULT)]
         model: String,
         /// Language spoken in the recordings, as a code such as en, fr or yo
@@ -39,6 +39,11 @@ enum Command {
         #[arg(long)]
         stdout: bool,
     },
+    /// List, add or remove Whisper models
+    Models {
+        #[command(subcommand)]
+        action: Option<ModelAction>,
+    },
     /// Run the web UI on 127.0.0.1 and print its URL when ready
     Serve {
         /// Port to listen on (default: any free port)
@@ -48,6 +53,50 @@ enum Command {
         #[arg(long)]
         exit_with_stdin: bool,
     },
+}
+
+#[derive(Subcommand)]
+enum ModelAction {
+    /// List every model and whether it is ready to use
+    List,
+    /// Add a CTranslate2 Whisper model from Hugging Face (owner/name) or a folder
+    Add {
+        /// A Hugging Face model id such as Sunbird/faster-whisper-51-african-languages, or a folder
+        source: String,
+        /// The name to show for it
+        #[arg(long)]
+        name: String,
+    },
+    /// Remove a model you added, deleting its downloaded files
+    Remove { model: String },
+}
+
+fn manage_models(action: Option<ModelAction>) -> ExitCode {
+    let result = match action.unwrap_or(ModelAction::List) {
+        ModelAction::List => {
+            for model in models::all() {
+                let kind = if model.builtin { "built in" } else { "added" };
+                let ready = if model.is_ready() { "ready" } else { "not downloaded" };
+                println!("{:<28} {:<24} {kind}, {ready}", model.name, model.label);
+            }
+            Ok(())
+        }
+        ModelAction::Add { source, name } => {
+            let folder = PathBuf::from(&source);
+            let adding = if folder.is_dir() { models::Adding::Folder(folder) } else { models::Adding::Repo(source) };
+            models::add(adding, &name).map(|model| {
+                println!("Added {} as {}. Use it with: vscribe transcribe -m {} …", model.label, model.name, model.name)
+            })
+        }
+        ModelAction::Remove { model } => models::remove(&model).map(|()| println!("Removed {model}.")),
+    };
+    match result {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            eprintln!("{error}");
+            ExitCode::FAILURE
+        }
+    }
 }
 
 fn collect_audio(paths: &[PathBuf]) -> Vec<PathBuf> {
@@ -76,7 +125,7 @@ fn collect_audio(paths: &[PathBuf]) -> Vec<PathBuf> {
 
 fn transcribe(paths: &[PathBuf], model: &str, language: &str, timestamps: bool, force: bool, stdout: bool) -> ExitCode {
     if models::find(model).is_none() {
-        eprintln!("Unknown model “{model}”. Use one of: {}.", models::MODELS.iter().map(|m| m.name).collect::<Vec<_>>().join(", "));
+        eprintln!("Unknown model “{model}”. Use one of: {}.", models::all().iter().map(|m| m.name.as_str()).collect::<Vec<_>>().join(", "));
         return ExitCode::FAILURE;
     }
     if !is_language(language) {
@@ -157,6 +206,7 @@ pub fn main() -> ExitCode {
         Command::Transcribe { paths, model, language, timestamps, force, stdout } => {
             transcribe(&paths, &model, &language, timestamps, force, stdout)
         }
+        Command::Models { action } => manage_models(action),
         Command::Serve { port, exit_with_stdin } => serve(port, exit_with_stdin),
     }
 }

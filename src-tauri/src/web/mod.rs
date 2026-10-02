@@ -49,6 +49,9 @@ pub fn router(store: Store) -> Router {
         .route("/sessions/{id}/title", post(rename))
         .route("/sessions/{id}/download", get(session_download))
         .route("/queue", get(queue))
+        .route("/models", post(model_add))
+        .route("/models/{name}", axum::routing::delete(model_remove))
+        .route("/models/offers", get(model_offers))
         .route("/models/banner", get(model_banner))
         .route("/models/onboard", get(model_onboard))
         .route("/models/{name}/download", post(model_download))
@@ -72,7 +75,7 @@ fn templates() -> Environment<'static> {
     env.add_filter("clock", |seconds: f64| clock(seconds));
     env.add_filter("when", when);
     env.add_filter("truncate", truncate);
-    env.add_function("model_status", |name: String| Value::from_serialize(models::status(&name)));
+    env.add_function("model_status", |name: String| Value::from_serialize(models::find(&name).map(|m| models::status(&m))));
     env
 }
 
@@ -163,7 +166,8 @@ impl Page {
         let snapshot = app.store.snapshot();
         let host = request.get(header::HOST).and_then(|h| h.to_str().ok()).unwrap_or("127.0.0.1");
         let mut context: BTreeMap<&str, Value> = BTreeMap::from([
-            ("models", Value::from_iter(models::MODELS.iter().map(|m| (m.name, m.label)))),
+            ("models", Value::from_iter(models::all().into_iter().map(|m| (m.name, m.label)))),
+            ("model_list", Value::from_serialize(models::all().iter().map(model_row).collect::<Vec<_>>())),
             ("languages", Value::from_iter(LANGUAGES.iter().map(|(code, label)| (*code, *label)))),
             ("model_downloads", Value::from_serialize(models::pending())),
             ("store", Value::from_object(view::StoreView(snapshot))),
@@ -397,13 +401,109 @@ async fn model_banner(State(app): State<App>, headers: HeaderMap) -> Reply {
     Page::new("_models.html").render(&app, &headers)
 }
 
+#[derive(serde::Serialize)]
+struct ModelRow {
+    name: String,
+    label: String,
+    builtin: bool,
+    ready: bool,
+    place: String,
+}
+
+fn model_row(model: &models::Model) -> ModelRow {
+    let place = match &model.source {
+        models::Source::Folder { path } => paths::tilde(path),
+        models::Source::Download { files } if !model.builtin => files.first().map_or_else(String::new, |(repo, _)| repo.clone()),
+        models::Source::Download { .. } => "Built in".into(),
+    };
+    ModelRow { name: model.name.clone(), label: model.label.clone(), builtin: model.builtin, ready: model.is_ready(), place }
+}
+
+async fn model_offers(State(app): State<App>, headers: HeaderMap, Query(search): Query<Search>) -> Reply {
+    let query = search.q.trim().to_string();
+    let looking = query.clone();
+    let offers = tokio::task::spawn_blocking(move || {
+        if looking.is_empty() { Ok(models::catalogue()) } else { models::search(&looking) }
+    })
+    .await
+    .map_err(server_error)?;
+    let page = Page::new("_model_offers.html").with("query", query);
+    match offers {
+        Ok(offers) => page.with("offers", Value::from_serialize(offers)),
+        Err(error) => page.with("error", error),
+    }
+    .render(&app, &headers)
+}
+
+#[derive(Deserialize)]
+struct NewModel {
+    #[serde(default)]
+    repo: String,
+    #[serde(default)]
+    folder: String,
+    name: String,
+}
+
+async fn model_add(State(app): State<App>, headers: HeaderMap, Form(form): Form<NewModel>) -> Reply {
+    let (repo, folder) = (form.repo.trim(), form.folder.trim());
+    let adding = if !folder.is_empty() {
+        Some(models::Adding::Folder(expand_home(folder)))
+    } else if !repo.is_empty() {
+        Some(models::Adding::Repo(repo.to_string()))
+    } else {
+        None
+    };
+    let label = form.name.clone();
+    let added = match adding {
+        None => Err("Choose a model first.".to_string()),
+        Some(adding) => tokio::task::spawn_blocking(move || models::add(adding, &label)).await.map_err(server_error)?,
+    };
+    match added {
+        Ok(model) => {
+            models::download_in_background(&model.name);
+            Page::new("_model_manager.html")
+                .with("changed", true)
+                .toast(&format!("Added the {} model", model.label))
+                .render(&app, &headers)
+        }
+        Err(error) => Page::new("_model_manager.html")
+            .with("error", error)
+            .with(
+                "adding",
+                Value::from_serialize(serde_json::json!({
+                    "from": if form.folder.is_empty() { "hub" } else { "folder" },
+                    "repo": form.repo,
+                    "folder": form.folder,
+                    "name": form.name,
+                })),
+            )
+            .render(&app, &headers),
+    }
+}
+
+fn expand_home(path: &str) -> std::path::PathBuf {
+    match path.strip_prefix("~/") {
+        Some(rest) => dirs::home_dir().unwrap_or_default().join(rest),
+        None => std::path::PathBuf::from(path),
+    }
+}
+
+async fn model_remove(State(app): State<App>, headers: HeaderMap, UrlPath(name): UrlPath<String>) -> Reply {
+    let label = models::label(&name);
+    tokio::task::spawn_blocking(move || models::remove(&name))
+        .await
+        .map_err(server_error)?
+        .map_err(|error| Failure(StatusCode::BAD_REQUEST, error))?;
+    Page::new("_model_manager.html").with("changed", true).toast(&format!("Removed the {label} model")).render(&app, &headers)
+}
+
 async fn model_onboard(State(app): State<App>, headers: HeaderMap) -> Reply {
     Page::new("_onboard_model.html").render(&app, &headers)
 }
 
 async fn model_download(State(app): State<App>, headers: HeaderMap, UrlPath(name): UrlPath<String>) -> Reply {
     let model = models::find(&name).ok_or_else(|| Failure(StatusCode::NOT_FOUND, format!("Unknown model “{name}”.")))?;
-    models::download_in_background(model.name);
+    models::download_in_background(&model.name);
     Page::new("_models.html").toast(&format!("Retrying the {} model download", model.label)).render(&app, &headers)
 }
 
@@ -479,7 +579,7 @@ async fn retry(State(app): State<App>, headers: HeaderMap, UrlPath(id): UrlPath<
     if job.active() {
         return Err(Failure(StatusCode::CONFLICT, "This voice note is already being transcribed.".into()));
     }
-    let job = app.store.retry(&id, model.name, &language).map_err(server_error)?.ok_or_else(missing_note)?;
+    let job = app.store.retry(&id, &model.name, &language).map_err(server_error)?.ok_or_else(missing_note)?;
     Page::new("_note.html")
         .toast(&format!("Transcribing again with the {} model", model.label))
         .with("job", view::job(&job))
