@@ -1,0 +1,28 @@
+{% from "_macros.html" import icon %}
+<form id="model-hub" class="settings-pane model-hub" hx-post="/models" hx-target="this" hx-swap="outerHTML"
+      hx-disabled-elt="find button[type=submit]" hx-disinherit="*"
+      x-data='{{ {"repo": repo or "", "name": name or ""}|tojson }}'{% if added %} x-init="tab = 'models'"{% endif %}>
+  <header class="settings-head">
+    <h3>Add from Hugging Face</h3>
+    <p>Whisper models in CTranslate2 (faster-whisper) format. They download the first time you use them.</p>
+  </header>
+  <div class="field-search">
+      {{ icon("search") }}
+      <input type="search" name="q" placeholder="Search Hugging Face" aria-label="Search Hugging Face" autocomplete="off" spellcheck="false"
+             hx-get="/models/offers" hx-trigger="input changed delay:400ms, search" hx-target="#model-offers" hx-sync="#model-offers:replace"
+             @keydown.enter.prevent>
+  </div>
+  <div id="model-offers" class="model-offers" hx-get="/models/offers" hx-trigger="intersect once" hx-sync="this:replace" aria-live="polite">
+    <p class="model-offers-note">Loading suggestions…</p>
+  </div>
+  <footer class="settings-foot">
+    <input type="hidden" name="repo" :value="repo">
+    <label class="field">
+      <span>Name in the picker</span>
+      <input name="name" x-model="name" :disabled="!repo" placeholder="Choose a model above" maxlength="40" required autocomplete="off">
+    </label>
+    {% if error %}<p class="model-add-error" role="alert">{{ error }}</p>{% endif %}
+    <button class="btn primary" type="submit" :disabled="!repo">{{ icon("plus") }}<span>Add model</span></button>
+  </footer>
+</form>
+{% if added %}{% with oob = true %}{% include "_model_list.html" %}{% endwith %}{% endif %}

@@ -1,0 +1,24 @@
+{% from "_macros.html" import icon %}
+<form id="model-folder" class="settings-pane" hx-post="/models" hx-target="this" hx-swap="outerHTML"
+      hx-disabled-elt="find button[type=submit]" hx-disinherit="*"
+      x-data='{{ {"folder": folder or "", "name": name or ""}|tojson }}'{% if added %} x-init="tab = 'models'"{% endif %}>
+  <header class="settings-head">
+    <h3>Add from this computer</h3>
+    <p>A folder holding a Whisper model in CTranslate2 (faster-whisper) format: config.json, model.bin, tokenizer.json and a vocabulary file. It is used where it is, not copied.</p>
+  </header>
+  <div class="field-row" x-show="desktop">
+    <input :value="folder" placeholder="No folder chosen" aria-label="Model folder" readonly>
+    <button class="btn small" type="button" @click="chooseModelFolder().then((path) => { if (path) { folder = path; name = path.split('/').filter(Boolean).pop() } })">{{ icon("folder-open") }}<span>Choose folder…</span></button>
+  </div>
+  <p class="settings-note" x-show="!desktop" x-cloak>Folders are added in the vScribe desktop app, or from a terminal with <code>vscribe models add /path/to/model --name "My model"</code>.</p>
+  <footer class="settings-foot" x-show="desktop">
+    <input type="hidden" name="folder" :value="folder">
+    <label class="field">
+      <span>Name in the picker</span>
+      <input name="name" x-model="name" :disabled="!folder" placeholder="Choose a folder above" maxlength="40" required autocomplete="off">
+    </label>
+    {% if error %}<p class="model-add-error" role="alert">{{ error }}</p>{% endif %}
+    <button class="btn primary" type="submit" :disabled="!folder">{{ icon("plus") }}<span>Add model</span></button>
+  </footer>
+</form>
+{% if added %}{% with oob = true %}{% include "_model_list.html" %}{% endwith %}{% endif %}

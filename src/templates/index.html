@@ -1,4 +1,4 @@
-{% from "_macros.html" import icon, window_controls, art_empty, art_mic, art_files, art_private, art_archive, picker %}
+{% from "_macros.html" import icon, window_controls, modal_chrome, art_empty, art_mic, art_files, art_private, art_archive, picker %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -99,7 +99,10 @@
         <span x-show="theme !== 'light' && theme !== 'dark'">{{ icon("monitor") }}</span>
         <span x-text="themeLabel">System theme</span>
       </button>
-      <button class="icon-btn" type="button" @click="$refs.about.showModal()" title="About vScribe" aria-label="About vScribe">{{ icon("info") }}</button>
+      <div class="side-foot-actions">
+        <button class="icon-btn" type="button" @click="$dispatch('open-settings', 'models')" title="Settings" aria-label="Settings">{{ icon("settings") }}</button>
+        <button class="icon-btn" type="button" @click="$dispatch('open-settings', 'about')" title="About vScribe" aria-label="About vScribe">{{ icon("info") }}</button>
+      </div>
     </div>
 
   </aside>
@@ -175,6 +178,7 @@
   </main>
 
   <dialog class="about consent" x-ref="consent" @close="closeConsent($el.returnValue === 'allow')">
+    {{ modal_chrome() }}
     <form method="dialog" class="about-card">
       <div x-show="consent?.kind === 'mic'">{{ art_mic() }}</div>
       <div x-show="consent?.kind === 'files'">{{ art_files() }}</div>
@@ -193,9 +197,9 @@
     </form>
   </dialog>
 
-  <dialog class="onboard" x-ref="onboarding" @cancel.prevent="finishOnboarding()"
+  <dialog class="onboard" x-ref="onboarding" @cancel.prevent="finishOnboarding()" @replay-intro.window="onboarding = 0; $el.showModal()"
           @keydown.right="onboarding < 3 && onboarding++" @keydown.left="onboarding > 0 && onboarding--">
-    <div class="onboard-chrome" data-tauri-drag-region>{{ window_controls() }}</div>
+    {{ modal_chrome() }}
     <div class="onboard-card">
       <header class="onboard-head">
         <span class="onboard-step" x-text="`${onboarding + 1} of 4`">1 of 4</span>
@@ -246,35 +250,73 @@
     </div>
   </dialog>
 
-  <dialog class="about models-dialog" x-ref="models" @click.self="$el.close()"
-          @picker-action.window="$event.detail === 'model' && $el.showModal()">
-    <div class="about-card">
-      <button class="icon-btn about-close" type="button" @click="$refs.models.close()" title="Close" aria-label="Close">{{ icon("x") }}</button>
-      <h2>Models</h2>
-      <p>Fast and Accurate are built in. Add others, such as a model fine-tuned for your language or accent.</p>
-      {% include "_model_manager.html" %}
+  <dialog class="about settings" x-ref="settings" x-data="{ tab: 'models' }" @click.self="$el.close()" aria-labelledby="settings-title"
+          @open-settings.window="tab = $event.detail; $el.showModal()"
+          @picker-action.window="if ($event.detail === 'model') { tab = 'models'; $el.showModal() }">
+    {{ modal_chrome() }}
+    <div class="about-card settings-card">
+      <button class="icon-btn about-close" type="button" @click="$el.closest('dialog').close()" title="Close" aria-label="Close">{{ icon("x") }}</button>
+      <nav class="settings-nav">
+        <h2 id="settings-title">Settings</h2>
+        <div class="settings-tabs" role="tablist" aria-label="Settings">
+          <button type="button" role="tab" :aria-selected="tab === 'models'" @click="tab = 'models'">{{ icon("cpu") }}<span>Models</span></button>
+          <button type="button" role="tab" :aria-selected="tab === 'hub'" @click="tab = 'hub'">{{ icon("download") }}<span>Hugging Face</span></button>
+          <button type="button" role="tab" :aria-selected="tab === 'folder'" @click="tab = 'folder'">{{ icon("folder-open") }}<span>This computer</span></button>
+          <button type="button" role="tab" :aria-selected="tab === 'appearance'" @click="tab = 'appearance'">{{ icon("sun") }}<span>Appearance</span></button>
+          <button type="button" role="tab" :aria-selected="tab === 'about'" @click="tab = 'about'">{{ icon("info") }}<span>About</span></button>
+        </div>
+      </nav>
+      <section class="settings-panel" role="tabpanel" x-show="tab === 'models'">
+        <div class="settings-pane">
+          <header class="settings-head">
+            <h3>Models</h3>
+            <p>Fast and Accurate are built in. Add others from Hugging Face or this computer, such as a model fine-tuned for your language or accent.</p>
+          </header>
+          {% include "_model_list.html" %}
+        </div>
+      </section>
+      <section class="settings-panel" role="tabpanel" x-show="tab === 'hub'" x-cloak>{% include "_model_hub.html" %}</section>
+      <section class="settings-panel" role="tabpanel" x-show="tab === 'folder'" x-cloak>{% include "_model_folder.html" %}</section>
+      <section class="settings-panel" role="tabpanel" x-show="tab === 'appearance'" x-cloak>
+        <div class="settings-pane">
+          <header class="settings-head">
+            <h3>Appearance</h3>
+            <p>System follows your computer's light or dark setting.</p>
+          </header>
+          <div class="theme-choices" role="radiogroup" aria-label="Theme">
+            <button type="button" role="radio" :aria-checked="theme === 'system'" @click="theme = 'system'">{{ icon("monitor") }}<span>System</span></button>
+            <button type="button" role="radio" :aria-checked="theme === 'light'" @click="theme = 'light'">{{ icon("sun") }}<span>Light</span></button>
+            <button type="button" role="radio" :aria-checked="theme === 'dark'" @click="theme = 'dark'">{{ icon("moon") }}<span>Dark</span></button>
+          </div>
+        </div>
+      </section>
+      <section class="settings-panel" role="tabpanel" x-show="tab === 'about'" x-cloak>
+        <div class="settings-pane settings-about">
+          <header class="about-brand">
+            <span class="brand-mark">{{ icon("audio-lines") }}</span>
+            <div>
+              <h3>vScribe</h3>
+              <p class="about-version">Version {{ version }}</p>
+            </div>
+          </header>
+          <p>Converts audio recordings and voice notes into text you can copy, search and export. You can also record straight from the add bar.</p>
+          <p>Everything runs on this computer with OpenAI's open Whisper models. Audio and transcripts never leave it.</p>
+          <dl class="about-facts">
+            <div><dt>Built-in models</dt><dd>Fast (small) · Accurate (large-v3-turbo)</dd></div>
+            <div><dt>Formats</dt><dd>opus, ogg, m4a, mp3, wav, amr, aac, webm</dd></div>
+            <div><dt>Saved in</dt><dd>{{ data_dir }}</dd></div>
+          </dl>
+          <h3>Found a problem?</h3>
+          <p>Send an email describing what happened and what you expected. Your app version and browser are filled in for you.</p>
+          <div class="about-actions">
+            <button class="btn" type="button" @click="$el.closest('dialog').close(); $dispatch('replay-intro')">{{ icon("play") }}<span>Show the intro again</span></button>
+            <a class="btn primary" :href="reportLink('b.fadamitan2019@gmail.com', '{{ version }}')" href="mailto:b.fadamitan2019@gmail.com">{{ icon("mail") }}<span>Report an issue</span></a>
+          </div>
+        </div>
+      </section>
     </div>
   </dialog>
 
-  <dialog class="about" x-ref="about" @click.self="$el.close()">
-    <div class="about-card">
-      <button class="icon-btn about-close" type="button" @click="$refs.about.close()" aria-label="Close">{{ icon("x") }}</button>
-      <span class="brand-mark">{{ icon("audio-lines") }}</span>
-      <h2>vScribe</h2>
-      <p class="about-version">Version {{ version }}</p>
-      <p>Converts audio recordings and voice notes into text you can copy, search and export. You can also record straight from the add bar.</p>
-      <p>Everything runs on this computer with OpenAI's open Whisper models. Audio and transcripts never leave it.</p>
-      <dl class="about-facts">
-        <div><dt>Models</dt><dd>Fast (small) · Accurate (large-v3-turbo)</dd></div>
-        <div><dt>Formats</dt><dd>opus, ogg, m4a, mp3, wav, amr, aac, webm</dd></div>
-        <div><dt>Saved in</dt><dd>{{ data_dir }}</dd></div>
-      </dl>
-      <h3>Found a problem?</h3>
-      <p>Send an email describing what happened and what you expected. Your app version and browser are filled in for you.</p>
-      <button class="btn about-intro" type="button" @click="$refs.about.close(); onboarding = 0; $refs.onboarding.showModal()">{{ icon("play") }}<span>Show the intro again</span></button>
-      <a class="btn primary" :href="reportLink('b.fadamitan2019@gmail.com', '{{ version }}')" href="mailto:b.fadamitan2019@gmail.com">{{ icon("mail") }}<span>Report an issue</span></a>
-    </div>
-  </dialog>
 
   <div class="busy" x-show="busy" x-cloak x-transition.opacity.duration.150ms role="status" aria-live="polite">
     <div class="busy-card">

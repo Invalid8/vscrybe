@@ -52,6 +52,7 @@ pub fn router(store: Store) -> Router {
         .route("/models", post(model_add))
         .route("/models/{name}", axum::routing::delete(model_remove))
         .route("/models/offers", get(model_offers))
+        .route("/models/list", get(model_list))
         .route("/models/banner", get(model_banner))
         .route("/models/onboard", get(model_onboard))
         .route("/models/{name}/download", post(model_download))
@@ -408,6 +409,10 @@ struct ModelRow {
     builtin: bool,
     ready: bool,
     place: String,
+    downloading: bool,
+    progress: f64,
+    total_mb: Option<u64>,
+    error: Option<String>,
 }
 
 fn model_row(model: &models::Model) -> ModelRow {
@@ -416,7 +421,22 @@ fn model_row(model: &models::Model) -> ModelRow {
         models::Source::Download { files } if !model.builtin => files.first().map_or_else(String::new, |(repo, _)| repo.clone()),
         models::Source::Download { .. } => "Built in".into(),
     };
-    ModelRow { name: model.name.clone(), label: model.label.clone(), builtin: model.builtin, ready: model.is_ready(), place }
+    let status = models::status(model);
+    ModelRow {
+        name: model.name.clone(),
+        label: model.label.clone(),
+        builtin: model.builtin,
+        ready: status.ready,
+        place,
+        downloading: status.downloading,
+        progress: status.progress,
+        total_mb: status.total_mb,
+        error: status.error,
+    }
+}
+
+async fn model_list(State(app): State<App>, headers: HeaderMap) -> Reply {
+    Page::new("_model_list.html").render(&app, &headers)
 }
 
 async fn model_offers(State(app): State<App>, headers: HeaderMap, Query(search): Query<Search>) -> Reply {
@@ -445,11 +465,12 @@ struct NewModel {
 }
 
 async fn model_add(State(app): State<App>, headers: HeaderMap, Form(form): Form<NewModel>) -> Reply {
-    let (repo, folder) = (form.repo.trim(), form.folder.trim());
+    let (repo, folder) = (form.repo.trim().to_string(), form.folder.trim().to_string());
+    let template = if folder.is_empty() { "_model_hub.html" } else { "_model_folder.html" };
     let adding = if !folder.is_empty() {
-        Some(models::Adding::Folder(expand_home(folder)))
+        Some(models::Adding::Folder(expand_home(&folder)))
     } else if !repo.is_empty() {
-        Some(models::Adding::Repo(repo.to_string()))
+        Some(models::Adding::Repo(repo.clone()))
     } else {
         None
     };
@@ -461,22 +482,17 @@ async fn model_add(State(app): State<App>, headers: HeaderMap, Form(form): Form<
     match added {
         Ok(model) => {
             models::download_in_background(&model.name);
-            Page::new("_model_manager.html")
+            Page::new(template)
+                .with("added", true)
                 .with("changed", true)
                 .toast(&format!("Added the {} model", model.label))
                 .render(&app, &headers)
         }
-        Err(error) => Page::new("_model_manager.html")
+        Err(error) => Page::new(template)
             .with("error", error)
-            .with(
-                "adding",
-                Value::from_serialize(serde_json::json!({
-                    "from": if form.folder.is_empty() { "hub" } else { "folder" },
-                    "repo": form.repo,
-                    "folder": form.folder,
-                    "name": form.name,
-                })),
-            )
+            .with("repo", repo)
+            .with("folder", folder)
+            .with("name", form.name)
             .render(&app, &headers),
     }
 }
@@ -494,7 +510,7 @@ async fn model_remove(State(app): State<App>, headers: HeaderMap, UrlPath(name):
         .await
         .map_err(server_error)?
         .map_err(|error| Failure(StatusCode::BAD_REQUEST, error))?;
-    Page::new("_model_manager.html").with("changed", true).toast(&format!("Removed the {label} model")).render(&app, &headers)
+    Page::new("_model_list.html").with("changed", true).toast(&format!("Removed the {label} model")).render(&app, &headers)
 }
 
 async fn model_onboard(State(app): State<App>, headers: HeaderMap) -> Reply {

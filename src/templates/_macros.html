@@ -10,6 +10,10 @@
 </div>
 {%- endmacro %}
 
+{% macro modal_chrome() -%}
+<div class="modal-chrome" data-tauri-drag-region>{{ window_controls() }}</div>
+{%- endmacro %}
+
 {% macro bars(count=5, cls="") -%}
 <span class="bars {{ cls }}" aria-hidden="true">{% for _ in range(count) %}<i></i>{% endfor %}</span>
 {%- endmacro %}

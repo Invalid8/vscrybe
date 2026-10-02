@@ -1,0 +1,31 @@
+<ul id="model-list" class="model-list"{% if oob %} hx-swap-oob="true"{% endif %}
+    {% if model_list|selectattr("downloading")|list %}hx-get="/models/list" hx-trigger="every 1s" hx-swap="outerHTML"{% endif %}>
+  {% for m in model_list %}
+    <li class="model-row" x-data="{ sure: false }">
+      <div class="model-row-body">
+        <b>{{ m.label }}</b>
+        {% if m.downloading %}
+          <span class="model-row-meta">Downloading · {{ (m.progress * 100)|round|int }}%{% if m.total_mb %} of {{ m.total_mb }} MB{% endif %}</span>
+          <span class="meter"><span style="--p: {{ m.progress }}"></span></span>
+        {% elif m.error %}
+          <span class="model-row-meta is-error">{{ m.error }}</span>
+        {% else %}
+          <span class="model-row-meta">{{ m.place }}{% if not m.ready %} · downloads on first use{% endif %}</span>
+        {% endif %}
+      </div>
+      {% if not m.builtin %}
+        <button class="btn small" type="button" x-show="!sure" @click="sure = true">Remove</button>
+        <button class="btn small is-danger" type="button" x-show="sure" x-cloak
+                hx-delete="/models/{{ m.name }}" hx-target="#model-list" hx-swap="outerHTML"
+                @htmx:after-request="if (model === '{{ m.name }}') model = 'small'">Remove {{ m.label }}</button>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+{% if changed %}
+  {% from "_macros.html" import picker %}
+  <div id="model-picker" class="composer-model" hx-swap-oob="true" title="Fast suits most voice notes. Accurate is slower but better with heavy accents and noise.">
+    {{ picker("model", models, "small", "Model", id="model", model="model", up=true, action="Manage models…") }}
+  </div>
+  {% with banner_oob = true %}{% include "_models.html" %}{% endwith %}
+{% endif %}
