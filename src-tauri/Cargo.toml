@@ -22,7 +22,7 @@ gstreamer = "0.25"
 gstreamer-app = "0.25"
 gstreamer-pbutils = "0.25"
 thiserror = "2"
-ct2rs = { version = "0.10.1", default-features = false, features = ["whisper", "mkl", "dnnl", "openmp-runtime-comp"] }
+ct2rs = { version = "0.10.1", default-features = false, features = ["whisper", "dnnl", "openmp-runtime-comp"] }
 tokenizers = "0.22"
 mel_spec = "0.3"
 rustfft = "6"
