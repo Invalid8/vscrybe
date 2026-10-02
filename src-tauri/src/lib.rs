@@ -5,6 +5,7 @@ pub mod web;
 use std::fs::{self, OpenOptions};
 use std::net::{Ipv4Addr, TcpListener};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::thread;
 
 use simplelog::{ColorChoice, CombinedLogger, ConfigBuilder, LevelFilter, TermLogger, TerminalMode, WriteLogger};
@@ -29,6 +30,11 @@ pub fn setup_logging() {
         loggers.push(WriteLogger::new(LevelFilter::Info, config, out));
     }
     let _ = CombinedLogger::init(loggers);
+    let default_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        log::error!("{info}");
+        default_hook(info);
+    }));
 }
 
 pub fn open_store() -> Result<Store, String> {
@@ -56,10 +62,16 @@ fn bind_remembered_port() -> Result<TcpListener, String> {
 pub fn start_server(store: Store, listener: TcpListener) -> Result<String, String> {
     let url = format!("http://{}", listener.local_addr().map_err(|e| e.to_string())?);
     listener.set_nonblocking(true).map_err(|e| e.to_string())?;
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .map_err(|e| format!("Couldn't start the server: {e}"))?;
+    let listener = {
+        let _entered = runtime.enter();
+        tokio::net::TcpListener::from_std(listener).map_err(|e| format!("Couldn't start the server: {e}"))?
+    };
     thread::spawn(move || {
-        let runtime = tokio::runtime::Builder::new_multi_thread().enable_all().build().expect("a tokio runtime");
         runtime.block_on(async {
-            let listener = tokio::net::TcpListener::from_std(listener).expect("a tokio listener");
             if let Err(error) = axum::serve(listener, web::router(store)).await {
                 log::error!("The server stopped: {error}");
             }
@@ -108,6 +120,8 @@ fn allow_microphone(window: &WebviewWindow) {
     });
 }
 
+static LAST_NOTIFICATION: AtomicU32 = AtomicU32::new(0);
+
 fn notify_finished(app: &AppHandle, batch: Batch) {
     let focused = app.get_webview_window("main").and_then(|w| w.is_focused().ok()).unwrap_or(false);
     if focused || batch.total == 0 {
@@ -122,6 +136,7 @@ fn notify_finished(app: &AppHandle, batch: Batch) {
     let app = app.clone();
     thread::spawn(move || {
         let shown = notify_rust::Notification::new()
+            .id(LAST_NOTIFICATION.load(Ordering::Relaxed))
             .appname("vScribe")
             .summary(title)
             .body(&body)
@@ -130,11 +145,14 @@ fn notify_finished(app: &AppHandle, batch: Batch) {
             .action("default", "Open vScribe")
             .show();
         match shown {
-            Ok(notification) => notification.wait_for_action(|action| {
-                if action == "default" {
-                    bring_to_front(&app);
-                }
-            }),
+            Ok(notification) => {
+                LAST_NOTIFICATION.store(notification.id(), Ordering::Relaxed);
+                notification.wait_for_action(|action| {
+                    if action == "default" {
+                        bring_to_front(&app);
+                    }
+                })
+            }
             Err(error) => log::warn!("Couldn't show a notification: {error}"),
         }
     });
