@@ -43,6 +43,37 @@ const MIN_CUT: usize = 20 * RATE;
 const BRIDGE: usize = 2 * RATE;
 const MERGE_GAP: usize = 5 * RATE;
 const PAD: usize = RATE * 3 / 10;
+const MIN_ADVANCE: usize = RATE;
+const BEAM_SIZE: usize = 5;
+const TEMPERATURES: [f32; 6] = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
+const COMPRESSION_LIMIT: f64 = 2.4;
+const LOG_PROB_LIMIT: f32 = -1.0;
+const NO_SPEECH_LIMIT: f32 = 0.6;
+
+struct Attempt {
+    pieces: Vec<Piece>,
+    avg_log_prob: f32,
+    no_speech_prob: f32,
+    compression: f64,
+}
+
+impl Attempt {
+    fn is_silence(&self) -> bool {
+        self.no_speech_prob > NO_SPEECH_LIMIT && self.avg_log_prob < LOG_PROB_LIMIT
+    }
+
+    fn is_good(&self) -> bool {
+        !self.repeats() && self.avg_log_prob >= LOG_PROB_LIMIT
+    }
+
+    fn repeats(&self) -> bool {
+        self.compression > COMPRESSION_LIMIT
+    }
+
+    fn is_confident_speech(&self) -> bool {
+        self.no_speech_prob < NO_SPEECH_LIMIT && self.is_good()
+    }
+}
 
 pub struct Engine {
     whisper: Whisper,
@@ -86,17 +117,28 @@ impl Engine {
             (AUTO, None) => DEFAULT_LANGUAGE.to_string(),
             (code, _) => code.to_string(),
         };
+        let threshold = speech_threshold(&frame_levels(&samples));
         let mut segments = Vec::new();
         for chunk in chunks {
-            let offset = chunk.start as f64 / RATE as f64;
-            let length = chunk.len() as f64 / RATE as f64;
-            let pieces = self.generate(&samples[chunk.clone()], &language).map_err(Error::Transcription)?;
-            segments.extend(segments_from(&pieces, length).into_iter().map(|s| Segment {
-                start: round2(offset + s.start),
-                end: round2(offset + s.end),
-                text: s.text,
-            }));
-            on_progress((chunk.end as f64 / samples.len() as f64).min(1.0));
+            let mut seek = chunk.start;
+            while seek < chunk.end {
+                let window = &samples[seek..chunk.end];
+                let attempt = self.decode_window(window, &language).map_err(Error::Transcription)?;
+                let resumed = seek > chunk.start;
+                let (found, consumed) = if attempt.is_silence() || (resumed && !attempt.is_confident_speech()) {
+                    (Vec::new(), window.len())
+                } else {
+                    advance(&attempt.pieces, window, threshold)
+                };
+                let offset = seek as f64 / RATE as f64;
+                segments.extend(found.into_iter().map(|s| Segment {
+                    start: round2(offset + s.start),
+                    end: round2(offset + s.end),
+                    text: s.text,
+                }));
+                seek += consumed;
+                on_progress((seek as f64 / samples.len() as f64).min(1.0));
+            }
         }
         Ok(Transcript { language, duration: round2(duration), segments })
     }
@@ -109,13 +151,43 @@ impl Engine {
         Ok(best.language.trim_start_matches("<|").trim_end_matches("|>").to_string())
     }
 
-    fn generate(&self, audio: &[f32], language: &str) -> Result<Vec<Piece>, String> {
+    fn decode_window(&self, audio: &[f32], language: &str) -> Result<Attempt, String> {
         let mut features = self.log_mel.compute(audio);
         let view = StorageView::new(&[1, self.log_mel.n_mels, FRAMES], &mut features, Device::CPU).map_err(|e| e.to_string())?;
         let prompt = vec![vec!["<|startoftranscript|>".to_string(), format!("<|{language}|>"), "<|transcribe|>".into()]];
-        let options = WhisperOptions { beam_size: 1, ..Default::default() };
-        let result = self.whisper.generate(&view, &prompt, &options).map_err(|e| e.to_string())?;
-        let ids = result.into_iter().next().and_then(|r| r.sequences_ids.into_iter().next()).unwrap_or_default();
+        let mut best: Option<Attempt> = None;
+        for temperature in TEMPERATURES {
+            let options = WhisperOptions {
+                beam_size: if temperature == 0.0 { BEAM_SIZE } else { 1 },
+                sampling_temperature: if temperature == 0.0 { 1.0 } else { temperature },
+                sampling_topk: if temperature == 0.0 { 1 } else { 0 },
+                return_scores: true,
+                return_no_speech_prob: true,
+                ..Default::default()
+            };
+            let result = self.whisper.generate(&view, &prompt, &options).map_err(|e| e.to_string())?;
+            let Some(result) = result.into_iter().next() else { break };
+            let ids = result.sequences_ids.into_iter().next().unwrap_or_default();
+            let length = ids.len() as f32;
+            let score = result.scores.first().copied().unwrap_or(f32::NEG_INFINITY);
+            let pieces = self.pieces(ids)?;
+            let attempt = Attempt {
+                avg_log_prob: score * length / (length + 1.0),
+                no_speech_prob: result.no_speech_prob,
+                compression: compression_ratio(&text_of(&pieces)),
+                pieces,
+            };
+            if attempt.is_silence() || attempt.is_good() {
+                return Ok(attempt);
+            }
+            if !attempt.repeats() && best.as_ref().is_none_or(|b| attempt.avg_log_prob > b.avg_log_prob) {
+                best = Some(attempt);
+            }
+        }
+        Ok(best.unwrap_or(Attempt { pieces: Vec::new(), avg_log_prob: f32::NEG_INFINITY, no_speech_prob: 1.0, compression: 0.0 }))
+    }
+
+    fn pieces(&self, ids: Vec<usize>) -> Result<Vec<Piece>, String> {
         let mut pieces = Vec::new();
         let mut text: Vec<u32> = Vec::new();
         for id in ids.into_iter().map(|id| id as u32) {
@@ -191,6 +263,43 @@ pub fn speech_chunks(samples: &[f32]) -> Vec<Range<usize>> {
         chunks.push(start..region.end);
     }
     chunks
+}
+
+fn text_of(pieces: &[Piece]) -> String {
+    pieces.iter().filter_map(|p| if let Piece::Text(t) = p { Some(t.as_str()) } else { None }).collect()
+}
+
+fn compression_ratio(text: &str) -> f64 {
+    let bytes = text.trim().as_bytes();
+    if bytes.is_empty() {
+        return 0.0;
+    }
+    let mut encoder = flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::default());
+    let compressed = std::io::Write::write_all(&mut encoder, bytes).and_then(|()| encoder.finish());
+    compressed.map_or(0.0, |c| bytes.len() as f64 / c.len().max(1) as f64)
+}
+
+fn advance(pieces: &[Piece], window: &[f32], threshold: f32) -> (Vec<Segment>, usize) {
+    let length = window.len() as f64 / RATE as f64;
+    let mut segments = segments_from(pieces, length);
+    let closed = pieces.windows(2).rev().find_map(|pair| match pair {
+        [Piece::Text(t), Piece::Time(end)] if !t.trim().is_empty() => Some(*end),
+        _ => None,
+    });
+    let open = matches!(pieces.last(), Some(Piece::Text(t)) if !t.trim().is_empty());
+    let Some(end) = closed else { return (segments, window.len()) };
+    let resume_at = ((end * RATE as f64) as usize).min(window.len());
+    if resume_at < MIN_ADVANCE || window.len() - resume_at < MIN_ADVANCE {
+        return (segments, window.len());
+    }
+    let unheard = frame_levels(&window[resume_at..]).iter().filter(|l| **l >= threshold).count();
+    if !open && unheard * FRAME < RATE / 2 {
+        return (segments, window.len());
+    }
+    if open {
+        segments.pop();
+    }
+    (segments, resume_at)
 }
 
 fn quietest(levels: &[f32], from: usize, to: usize) -> usize {
@@ -272,6 +381,36 @@ mod tests {
         assert!(chunks.iter().all(|c| c.len() <= MAX_CHUNK));
         assert!(chunks[0].start >= 4 * RATE);
         assert!(chunks.windows(2).all(|w| w[0].end <= w[1].start));
+    }
+
+    #[test]
+    fn decoding_resumes_where_the_model_stopped_while_speech_remains() {
+        let window = tone(20.0);
+        let (segments, consumed) = advance(&[t(0.0), w(" Only the start."), t(2.0)], &window, 0.01);
+        assert_eq!(segments.len(), 1);
+        assert_eq!(consumed, 2 * RATE);
+    }
+
+    #[test]
+    fn a_window_that_ends_in_silence_is_finished() {
+        let mut window = tone(4.0);
+        window.extend(vec![0.0; 16 * RATE]);
+        let (_, consumed) = advance(&[t(0.0), w(" Short."), t(4.0)], &window, 0.01);
+        assert_eq!(consumed, window.len());
+    }
+
+    #[test]
+    fn an_unfinished_segment_is_dropped_and_decoded_again() {
+        let window = tone(20.0);
+        let (segments, consumed) = advance(&[t(0.0), w(" Done."), t(3.0), t(3.0), w(" Cut off")], &window, 0.01);
+        assert_eq!(segments.iter().map(|s| s.text.as_str()).collect::<Vec<_>>(), ["Done."]);
+        assert_eq!(consumed, 3 * RATE);
+    }
+
+    #[test]
+    fn repetition_compresses_far_better_than_speech() {
+        assert!(compression_ratio(&"undesign it, ".repeat(40)) > COMPRESSION_LIMIT);
+        assert!(compression_ratio("So once they say shop online now, you go and link it to the available stores.") < COMPRESSION_LIMIT);
     }
 
     #[test]

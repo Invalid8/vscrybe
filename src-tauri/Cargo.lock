@@ -6005,6 +6005,7 @@ dependencies = [
  "ct2rs",
  "dirs 6.0.0",
  "ffmpeg-next",
+ "flate2",
  "log",
  "mel_spec",
  "minijinja",

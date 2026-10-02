@@ -22,6 +22,7 @@ tauri-plugin-single-instance = "2"
 ffmpeg-next = { version = "8.1", default-features = false, features = ["codec", "format", "software-resampling", "static"] }
 thiserror = "2"
 tokenizers = "0.22"
+flate2 = "1"
 mel_spec = "0.3"
 rustfft = "6"
 axum = { version = "0.8", features = ["multipart"] }
