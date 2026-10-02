@@ -32,5 +32,5 @@ Renamed to **vScribe** and rewritten as a native Rust app. Your sessions and dow
 
 First release (Python).
 
-[0.2.0]: https://github.com/OWNER/vscribe/releases/tag/v0.2.0
-[0.1.0]: https://github.com/OWNER/vscribe/releases/tag/v0.1.0
+[0.2.0]: https://github.com/Invalid8/vscribe/releases/tag/v0.2.0
+[0.1.0]: https://github.com/Invalid8/vscribe/releases/tag/v0.1.0

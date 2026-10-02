@@ -25,7 +25,7 @@ Convert audio and voice notes to text you can copy, search and export, without u
 ### Linux (Ubuntu, Debian, Mint, Pop!_OS)
 
 Download the latest `vscribe_<version>_amd64.deb` from
-[Releases](https://github.com/OWNER/vscribe/releases), then:
+[Releases](https://github.com/Invalid8/vscribe/releases), then:
 
 ```sh
 sudo apt install ./vscribe_*_amd64.deb
