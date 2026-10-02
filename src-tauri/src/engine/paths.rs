@@ -8,10 +8,11 @@ fn moved(base: Option<PathBuf>) -> PathBuf {
     let base = base.expect("a home directory");
     let current = base.join(APP);
     let old = base.join(OLD_APP);
-    if !current.exists() && old.is_dir() {
-        if let Err(error) = fs::rename(&old, &current) {
-            log::warn!("Couldn't move {} to {}: {error}", old.display(), current.display());
-        }
+    if !current.exists()
+        && old.is_dir()
+        && let Err(error) = fs::rename(&old, &current)
+    {
+        log::warn!("Couldn't move {} to {}: {error}", old.display(), current.display());
     }
     current
 }

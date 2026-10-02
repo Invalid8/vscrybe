@@ -175,11 +175,12 @@ pub fn speech_chunks(samples: &[f32]) -> Vec<Range<usize>> {
 
     let mut chunks: Vec<Range<usize>> = Vec::new();
     for region in regions {
-        if let Some(last) = chunks.last_mut() {
-            if region.start - last.end <= MERGE_GAP && region.end - last.start <= MAX_CHUNK {
-                last.end = region.end;
-                continue;
-            }
+        if let Some(last) = chunks.last_mut()
+            && region.start - last.end <= MERGE_GAP
+            && region.end - last.start <= MAX_CHUNK
+        {
+            last.end = region.end;
+            continue;
         }
         let mut start = region.start;
         while region.end - start > MAX_CHUNK {
