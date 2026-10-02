@@ -178,10 +178,6 @@ fn transcribe(paths: &[PathBuf], model: &str, language: &str, timestamps: bool, 
 
 fn serve(port: u16, exit_with_stdin: bool) -> ExitCode {
     crate::setup_logging();
-    if let Some(problem) = crate::startup_problem() {
-        eprintln!("{problem}");
-        return ExitCode::FAILURE;
-    }
     let url = match crate::open_store().and_then(|store| crate::start_server(store, crate::bind(port)?)) {
         Ok(url) => url,
         Err(error) => {

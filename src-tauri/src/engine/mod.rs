@@ -7,5 +7,5 @@ pub mod store;
 pub mod transcribe;
 pub mod transcript;
 
-pub use decode::{SAMPLE_RATE, decode, missing_elements, probe_duration};
+pub use decode::{SAMPLE_RATE, decode, probe_duration};
 pub use error::Error;

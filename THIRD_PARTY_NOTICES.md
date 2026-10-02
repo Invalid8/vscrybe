@@ -28,7 +28,8 @@ license; the full texts ship inside the respective packages and are linked here.
 | Component | License |
 | --- | --- |
 | [CTranslate2](https://github.com/OpenNMT/CTranslate2) via [ct2rs](https://github.com/jkawamoto/ctranslate2-rs) | MIT |
-| [Intel oneMKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html) (statically linked by CTranslate2) | [Intel Simplified Software License](https://www.intel.com/content/www/us/en/developer/articles/license/onemkl-license-faq.html) |
+| [oneDNN](https://github.com/uxlfoundation/oneDNN) (statically linked by CTranslate2 on Linux and Windows) | Apache-2.0 |
+| [FFmpeg](https://ffmpeg.org) libavcodec, libavformat, libavutil and libswresample, a decode-only build made by `packaging/ffmpeg/build.sh` and statically linked | LGPL-2.1-or-later |
 | [Tauri](https://tauri.app), [axum](https://github.com/tokio-rs/axum), [MiniJinja](https://github.com/mitsuhiko/minijinja) and the other Rust crates | MIT or Apache-2.0 (a few BSD/ISC/Zlib) |
 
 The full list of Rust crates and exact versions is in `src-tauri/Cargo.lock`.
@@ -37,5 +38,12 @@ The full list of Rust crates and exact versions is in `src-tauri/Cargo.lock`.
 
 | Component | License |
 | --- | --- |
-| [GStreamer](https://gstreamer.freedesktop.org) and its plugin sets, including gstreamer1.0-libav (FFmpeg) | LGPL-2.1-or-later (some plugins in -ugly/-bad carry their own terms) |
+| [GStreamer](https://gstreamer.freedesktop.org) plugin sets, used by WebKitGTK to play audio in the Linux app | LGPL-2.1-or-later (some plugins in -ugly/-bad carry their own terms) |
 | [WebKitGTK](https://webkitgtk.org) | LGPL-2.1 / BSD |
+
+## FFmpeg
+
+vScribe decodes audio with FFmpeg 8.1, built from the unmodified upstream source by `packaging/ffmpeg/build.sh` with
+only the demuxers, parsers and audio decoders listed there. It is licensed under the
+[GNU LGPL version 2.1 or later](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html). Because vScribe is open
+source, you can rebuild it against a modified FFmpeg by changing that script and building from this repository.

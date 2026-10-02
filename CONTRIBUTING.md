@@ -22,13 +22,20 @@ tests/e2e/            Playwright tests that drive the real app in Chromium and F
 On Ubuntu/Debian:
 
 ```sh
-sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev build-essential cmake \
-  libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
-  gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav
+sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev build-essential cmake libclang-dev pkg-config \
+  gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-libav
 ```
 
-plus [Rust](https://rustup.rs), Node.js 20+ and, for the browser tests, [uv](https://docs.astral.sh/uv/). The first
-build compiles CTranslate2 and downloads Intel oneMKL, which takes a while.
+plus [Rust](https://rustup.rs), Node.js 20+ and, for the browser tests, [uv](https://docs.astral.sh/uv/). The GStreamer
+plugins are only for playing audio inside the Linux app; decoding uses FFmpeg built into vScribe.
+
+Build that FFmpeg once (about a minute; `src-tauri/.cargo/config.toml` points cargo at it):
+
+```sh
+packaging/ffmpeg/build.sh
+```
+
+The first cargo build also compiles CTranslate2, which takes a while.
 
 ```sh
 npm ci

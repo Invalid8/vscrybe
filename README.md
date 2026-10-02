@@ -1,5 +1,7 @@
 # vScribe
 
+[![CI](https://github.com/Invalid8/vscribe/actions/workflows/ci.yml/badge.svg)](https://github.com/Invalid8/vscribe/actions/workflows/ci.yml)
+
 Convert audio and voice notes to text you can copy, search and export, without uploading them anywhere. Transcription runs on your own computer with OpenAI's open Whisper models.
 
 <picture>
@@ -36,7 +38,8 @@ Open **vScribe** from your app menu. The first time you transcribe, it downloads
 Uninstall with `sudo apt remove vscribe`. Your sessions stay in `~/.local/share/vscribe` until you delete
 that folder.
 
-Windows and macOS builds are planned. To build from source, see [CONTRIBUTING.md](CONTRIBUTING.md).
+Windows and macOS builds come from the same release workflow and are being tested. To build from source, see
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Command line
 

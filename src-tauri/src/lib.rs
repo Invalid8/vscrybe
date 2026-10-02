@@ -82,19 +82,6 @@ pub fn start_server(store: Store, listener: TcpListener) -> Result<String, Strin
     Ok(url)
 }
 
-pub fn startup_problem() -> Option<String> {
-    let missing = engine::missing_elements();
-    (!missing.is_empty()).then(|| {
-        if cfg!(target_os = "linux") {
-            format!("Audio decoding needs GStreamer packages that aren't installed. Run: sudo apt install {}.", missing.join(" "))
-        } else {
-            "Audio decoding needs GStreamer, which isn't installed. Install it from \
-             https://gstreamer.freedesktop.org/download/ and start vScribe again."
-                .into()
-        }
-    })
-}
-
 fn is_app_url(url: &Url) -> bool {
     matches!(url.scheme(), "tauri" | "about" | "blob" | "data")
         || matches!(url.host_str(), Some("127.0.0.1" | "tauri.localhost"))
@@ -195,7 +182,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
-            let started = startup_problem().map_or_else(open_store, Err).and_then(|store| {
+            let started = open_store().and_then(|store| {
                 let handle = app.handle().clone();
                 store.on_batch_finished(move |batch| notify_finished(&handle, batch));
                 start_server(store, bind_remembered_port()?)

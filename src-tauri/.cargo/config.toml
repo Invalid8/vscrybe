@@ -1,0 +1,2 @@
+[env]
+PKG_CONFIG_PATH = { value = "../packaging/ffmpeg/out/lib/pkgconfig", relative = true }
