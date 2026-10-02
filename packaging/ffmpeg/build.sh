@@ -22,17 +22,17 @@ if [ ! -d "ffmpeg-$version" ]; then
 fi
 cd "ffmpeg-$version"
 
-platform=()
+toolchain=
 case "$(uname -s)" in
   MINGW* | MSYS* | CYGWIN*)
-    platform=(--toolchain=msvc)
+    toolchain=--toolchain=msvc
     prefix=$(cygpath -m "$prefix")
     ;;
 esac
 
 ./configure \
   --prefix="$prefix" \
-  "${platform[@]}" \
+  ${toolchain:+"$toolchain"} \
   --enable-static --disable-shared --enable-pic \
   --disable-everything --disable-autodetect --disable-programs --disable-doc --disable-network \
   --disable-avdevice --disable-avfilter --disable-swscale --disable-x86asm \
