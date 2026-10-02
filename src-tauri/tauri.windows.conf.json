@@ -1,5 +1,12 @@
 {
   "bundle": {
-    "targets": ["nsis"]
+    "targets": [
+      "nsis"
+    ],
+    "resources": {
+      "windows-runtime/vcomp140.dll": "vcomp140.dll",
+      "windows-runtime/vcruntime140.dll": "vcruntime140.dll",
+      "windows-runtime/vcruntime140_1.dll": "vcruntime140_1.dll"
+    }
   }
 }

@@ -70,6 +70,17 @@ jobs:
           choco install pkgconfiglite -y --no-progress
           "LIBCLANG_PATH=C:\Program Files\LLVM\bin" >> $env:GITHUB_ENV
 
+      - name: Collect the OpenMP and C++ runtime DLLs shipped with the app
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $redist = Join-Path $env:VCToolsRedistDir "x64"
+          $dest = New-Item -ItemType Directory -Force src-tauri/windows-runtime
+          Copy-Item "$redist\Microsoft.VC14*.OpenMP\vcomp140.dll" $dest
+          Copy-Item "$redist\Microsoft.VC14*.CRT\vcruntime140.dll", "$redist\Microsoft.VC14*.CRT\vcruntime140_1.dll" $dest
+          Get-ChildItem $dest
+          dumpbin /dependents "$dest\vcomp140.dll"
+
       - name: Install pkg-config
         if: runner.os == 'macOS'
         run: brew install pkgconf

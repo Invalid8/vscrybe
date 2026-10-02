@@ -23,16 +23,18 @@ fi
 cd "ffmpeg-$version"
 
 toolchain=
+runtime=
 case "$(uname -s)" in
   MINGW* | MSYS* | CYGWIN*)
     toolchain=--toolchain=msvc
+    runtime=--extra-cflags=-MT
     prefix=$(cygpath -m "$prefix")
     ;;
 esac
 
 ./configure \
   --prefix="$prefix" \
-  ${toolchain:+"$toolchain"} \
+  ${toolchain:+"$toolchain"} ${runtime:+"$runtime"} \
   --enable-static --disable-shared --enable-pic \
   --disable-everything --disable-autodetect --disable-programs --disable-doc --disable-network \
   --disable-avdevice --disable-avfilter --disable-swscale --disable-x86asm \

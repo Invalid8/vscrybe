@@ -6,3 +6,4 @@ test-results/
 /tests/e2e/.venv/
 /packaging/ffmpeg/out/
 /packaging/ffmpeg/work/
+/src-tauri/windows-runtime/

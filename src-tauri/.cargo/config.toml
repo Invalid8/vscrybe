@@ -1,2 +1,5 @@
 [env]
 PKG_CONFIG_PATH = { value = "../packaging/ffmpeg/out/lib/pkgconfig", relative = true }
+
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

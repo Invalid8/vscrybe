@@ -11,7 +11,7 @@ use std::thread;
 
 use simplelog::{ColorChoice, CombinedLogger, ConfigBuilder, LevelFilter, TermLogger, TerminalMode, WriteLogger};
 use tauri::webview::DownloadEvent;
-use tauri::{AppHandle, Manager, Url, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use tauri::{AppHandle, Manager, Url, WebviewUrl, WebviewWindowBuilder};
 
 use engine::store::{Batch, Store};
 
@@ -99,7 +99,7 @@ fn unique_path(dir: &Path, name: &str) -> PathBuf {
 }
 
 #[cfg(target_os = "linux")]
-fn allow_microphone(window: &WebviewWindow) {
+fn allow_microphone(window: &tauri::WebviewWindow) {
     use webkit2gtk::{PermissionRequestExt, SettingsExt, WebViewExt};
     let _ = window.with_webview(|webview| {
         let view = webview.inner();

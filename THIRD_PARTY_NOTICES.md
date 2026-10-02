@@ -30,6 +30,7 @@ license; the full texts ship inside the respective packages and are linked here.
 | [CTranslate2](https://github.com/OpenNMT/CTranslate2) via [ct2rs](https://github.com/jkawamoto/ctranslate2-rs) | MIT |
 | [oneDNN](https://github.com/uxlfoundation/oneDNN) (statically linked by CTranslate2 on Linux and Windows) | Apache-2.0 |
 | [FFmpeg](https://ffmpeg.org) libavcodec, libavformat, libavutil and libswresample, a decode-only build made by `packaging/ffmpeg/build.sh` and statically linked | LGPL-2.1-or-later |
+| Microsoft Visual C++ runtime (`vcomp140.dll`, `vcruntime140.dll`, `vcruntime140_1.dll`), shipped with the Windows build | [Visual Studio redistributable terms](https://learn.microsoft.com/en-us/visualstudio/releases/2022/redistribution) |
 | [Tauri](https://tauri.app), [axum](https://github.com/tokio-rs/axum), [MiniJinja](https://github.com/mitsuhiko/minijinja) and the other Rust crates | MIT or Apache-2.0 (a few BSD/ISC/Zlib) |
 
 The full list of Rust crates and exact versions is in `src-tauri/Cargo.lock`.
