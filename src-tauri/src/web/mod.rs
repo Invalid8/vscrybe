@@ -16,6 +16,7 @@ use minijinja::{Environment, Value};
 use percent_encoding::{AsciiSet, NON_ALPHANUMERIC, utf8_percent_encode};
 use rust_embed::RustEmbed;
 use serde::Deserialize;
+use tokio::io::AsyncWriteExt;
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
 
@@ -262,10 +263,30 @@ fn is_audio(name: &str, content_type: &str) -> bool {
     AUDIO_EXTENSIONS.contains(&extension.as_str()) || content_type.starts_with("audio/")
 }
 
+struct Staged(Vec<(String, std::path::PathBuf)>);
+
+impl Drop for Staged {
+    fn drop(&mut self) {
+        for (_, path) in &self.0 {
+            let _ = std::fs::remove_file(path);
+        }
+    }
+}
+
+async fn stage(store: &Store, mut field: axum::extract::multipart::Field<'_>) -> Result<std::path::PathBuf, Failure> {
+    let path = store.incoming();
+    let mut file = tokio::fs::File::create(&path).await.map_err(server_error)?;
+    while let Some(chunk) = field.chunk().await.map_err(|e| Failure(StatusCode::BAD_REQUEST, e.body_text()))? {
+        file.write_all(&chunk).await.map_err(server_error)?;
+    }
+    file.flush().await.map_err(server_error)?;
+    Ok(path)
+}
+
 async fn upload(State(app): State<App>, headers: HeaderMap, mut form: Multipart) -> Reply {
     let bad = |e: axum::extract::multipart::MultipartError| Failure(StatusCode::BAD_REQUEST, e.body_text());
     let (mut model, mut language, mut session) = (models::DEFAULT.to_string(), DEFAULT_LANGUAGE.to_string(), String::new());
-    let mut files = Vec::new();
+    let mut files = Staged(Vec::new());
     let mut skipped = 0;
     while let Some(field) = form.next_field().await.map_err(bad)? {
         match field.name().unwrap_or_default() {
@@ -276,7 +297,8 @@ async fn upload(State(app): State<App>, headers: HeaderMap, mut form: Multipart)
                 let name = field.file_name().unwrap_or_default().to_string();
                 let content_type = field.content_type().unwrap_or_default().to_string();
                 if is_audio(&name, &content_type) {
-                    files.push((name, field.bytes().await.map_err(bad)?));
+                    let path = stage(&app.store, field).await?;
+                    files.0.push((name, path));
                 } else if !name.is_empty() {
                     skipped += 1;
                 }
@@ -290,7 +312,7 @@ async fn upload(State(app): State<App>, headers: HeaderMap, mut form: Multipart)
     if !is_language(&language) {
         return Err(Failure(StatusCode::BAD_REQUEST, format!("Unknown language “{language}”.")));
     }
-    if files.is_empty() {
+    if files.0.is_empty() {
         return Err(Failure(
             StatusCode::BAD_REQUEST,
             "None of those files are audio. Try .opus, .ogg, .m4a, .mp3, .wav or .amr.".into(),
@@ -301,11 +323,11 @@ async fn upload(State(app): State<App>, headers: HeaderMap, mut form: Multipart)
         Some(current) => current,
         None => app.store.create_session().map_err(server_error)?,
     };
-    let count = files.len();
-    for (name, data) in files {
+    let count = files.0.len();
+    for (name, staged) in files.0.clone() {
         let store = app.store.clone();
         let (model, language, session) = (model.clone(), language.clone(), current.id.clone());
-        tokio::task::spawn_blocking(move || store.add(&name, &data, &model, &language, &session))
+        tokio::task::spawn_blocking(move || store.add(&name, &staged, &model, &language, &session))
             .await
             .map_err(server_error)?
             .map_err(|e| server_error(format!("Couldn't save the voice note: {e}")))?;

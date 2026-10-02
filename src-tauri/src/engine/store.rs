@@ -164,6 +164,8 @@ impl Store {
     pub fn open_at(root: PathBuf) -> io::Result<Self> {
         fs::create_dir_all(root.join("notes"))?;
         fs::create_dir_all(root.join("sessions"))?;
+        let _ = fs::remove_dir_all(root.join("incoming"));
+        fs::create_dir_all(root.join("incoming"))?;
         let (queue, pending) = channel();
         let store = Self { root, state: Arc::default(), queue, batch_listener: Arc::default() };
         let mut resume = Vec::new();
@@ -204,6 +206,10 @@ impl Store {
         &self.root
     }
 
+    pub fn incoming(&self) -> PathBuf {
+        self.root.join("incoming").join(new_id())
+    }
+
     pub fn lock(&self) -> MutexGuard<'_, State> {
         self.state.lock().unwrap_or_else(|e| e.into_inner())
     }
@@ -241,7 +247,7 @@ impl Store {
         let _ = self.queue.send(id.into());
     }
 
-    pub fn add(&self, name: &str, data: &[u8], model: &str, language: &str, session: &str) -> io::Result<Job> {
+    pub fn add(&self, name: &str, staged: &Path, model: &str, language: &str, session: &str) -> io::Result<Job> {
         let name = Path::new(name).file_name().and_then(|n| n.to_str()).unwrap_or("voice-note").to_string();
         let extension = Path::new(&name).extension().and_then(|e| e.to_str()).map(|e| format!(".{}", e.to_lowercase()));
         let mut job = Job {
@@ -262,7 +268,7 @@ impl Store {
         let folder = job.folder(&self.root);
         let saved = (|| {
             fs::create_dir_all(&folder)?;
-            fs::write(folder.join(&job.audio), data)?;
+            fs::rename(staged, folder.join(&job.audio))?;
             job.duration = probe_duration(&folder.join(&job.audio)).map(round2);
             self.save_job(&job)
         })();

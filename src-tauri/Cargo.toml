@@ -28,7 +28,7 @@ tokenizers = "0.22"
 mel_spec = "0.3"
 rustfft = "6"
 axum = { version = "0.8", features = ["multipart"] }
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "io-std"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "io-std", "fs"] }
 tower-http = { version = "0.6", features = ["fs"] }
 minijinja = { version = "2", features = ["loader", "json", "preserve_order"] }
 minijinja-contrib = { version = "2", features = ["pycompat"] }
