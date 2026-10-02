@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fs;
+use std::panic::{self, AssertUnwindSafe};
 use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{Receiver, Sender, channel};
@@ -12,7 +13,7 @@ use serde::{Deserialize, Serialize};
 
 use super::transcribe::{DEFAULT_LANGUAGE, Engine};
 use super::transcript::{Transcript, round2};
-use super::{models, paths, probe_duration};
+use super::{Error, models, paths, probe_duration};
 
 pub fn now() -> f64 {
     SystemTime::now().duration_since(UNIX_EPOCH).map_or(0.0, |d| d.as_secs_f64())
@@ -334,12 +335,10 @@ impl Store {
     }
 
     fn work(self, pending: Receiver<String>) {
-        let mut engines: HashMap<String, Engine> = HashMap::new();
+        let mut loaded: Option<(String, Engine)> = None;
         let mut revision = models::revision();
         match Engine::load(models::DEFAULT) {
-            Ok(engine) => {
-                engines.insert(models::DEFAULT.into(), engine);
-            }
+            Ok(engine) => loaded = Some((models::DEFAULT.into(), engine)),
             Err(error) => log::error!("Couldn't load the {} model: {error}", models::DEFAULT),
         }
         for id in pending {
@@ -348,20 +347,28 @@ impl Store {
             };
             if models::revision() != revision {
                 revision = models::revision();
-                engines.retain(|name, _| models::is_builtin(name));
+                loaded = loaded.filter(|(name, _)| models::is_builtin(name));
             }
             let started = now();
-            let result = (|| {
-                if !engines.contains_key(&job.model) {
-                    let engine = Engine::load(&job.model)?;
-                    engines.insert(job.model.clone(), engine);
-                }
+            let attempt = panic::catch_unwind(AssertUnwindSafe(|| {
+                let current = loaded.take().filter(|(name, _)| *name == job.model);
+                let (_, engine) = match current {
+                    Some(current) => loaded.insert(current),
+                    None => loaded.insert((job.model.clone(), Engine::load(&job.model)?)),
+                };
                 self.update(&id, |j| j.status = "running".into());
                 let mut progress = |value: f64| self.update(&id, |j| j.progress = value);
-                engines[&job.model]
-                    .transcribe(&job.folder(&self.root).join(&job.audio), &job.language, &mut progress)
-                    .map_err(|e| e.to_string())
-            })();
+                engine.transcribe(&job.folder(&self.root).join(&job.audio), &job.language, &mut progress).map_err(|e| {
+                    if let Error::Undecodable(detail) = &e {
+                        log::warn!("Couldn't decode {}: {detail}", job.name);
+                    }
+                    e.to_string()
+                })
+            }));
+            let result = attempt.unwrap_or_else(|_| {
+                loaded = None;
+                Err("vScribe hit an internal error on this file. Try another model, or report it from About.".into())
+            });
             let mut state = self.lock();
             state.batch_done += 1;
             let failed = result.as_ref().err().map(|_| job.name.clone());
