@@ -5,6 +5,24 @@ and the project uses [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 
+### Added
+- Settings window (gear beside About) with Models, Hugging Face, This computer, Appearance and About tabs. Add
+  Whisper models from a Hugging Face list or a folder on this computer; a downloading model shows its progress.
+- Windows and macOS builds.
+
+### Changed
+- Audio is decoded by FFmpeg built into vScribe, so nothing has to be installed on any system. It is also more
+  accurate than the GStreamer pipeline it replaces (stereo was mixed down about 3 dB too quiet).
+- Only one model is kept in memory at a time, and uploads are written to disk instead of held in memory.
+
+### Fixed
+- Long stretches of speech could be left out when Whisper stopped early in a 30-second window. Transcription now
+  resumes where it stopped, retries unreliable output and discards repetition loops.
+- Files with a few undecodable packets (some `.amr` recordings) failed entirely; those packets are now skipped.
+- Download progress stayed at 0% until a model finished, and a second download waited behind the first.
+- Gated Hugging Face models failed with "check your internet connection"; they are now marked and refused.
+- Dialogs covered the window controls, and clicking a "Transcription finished" notification didn't open the app.
+
 ## [0.2.0] - 2026-10-01
 
 Renamed to **vScribe** and rewritten as a native Rust app. Your sessions and downloaded models move over automatically.
