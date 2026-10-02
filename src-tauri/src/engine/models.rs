@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread;
+use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
@@ -174,6 +175,7 @@ struct Download {
     total: u64,
     done: u64,
     error: Option<String>,
+    cancelled: bool,
 }
 
 static DOWNLOADS: Mutex<Option<HashMap<String, Download>>> = Mutex::new(None);
@@ -216,10 +218,11 @@ pub fn ensure(name: &str) -> Result<PathBuf, String> {
         let missing = gaps(|file| folder.join(file).is_file()).join(", ");
         return Err(format!("The {} model's folder {} is missing {missing}.", model.label, paths::tilde(&folder)));
     };
-    let single = Arc::clone(
-        ENSURING.lock().unwrap_or_else(|e| e.into_inner()).get_or_insert_default().entry(model.name.clone()).or_default(),
-    );
+    let single = download_lock(&model.name);
     let _single = single.lock().unwrap_or_else(|e| e.into_inner());
+    if find(name).is_none() {
+        return Err(format!("The {} model was removed.", model.label));
+    }
     if model.is_ready() {
         return Ok(model.folder());
     }
@@ -229,6 +232,7 @@ pub fn ensure(name: &str) -> Result<PathBuf, String> {
             downloads().get_or_insert_default().remove(&model.name);
             Ok(model.folder())
         }
+        Err(_) if is_cancelled(&model.name) => Err(format!("The {} model was removed.", model.label)),
         Err(error) => {
             log::warn!("Model download failed for {name}: {error}");
             let message = download_problem(error.as_ref(), &model.label);
@@ -236,6 +240,14 @@ pub fn ensure(name: &str) -> Result<PathBuf, String> {
             Err(message)
         }
     }
+}
+
+fn download_lock(name: &str) -> Arc<Mutex<()>> {
+    Arc::clone(ENSURING.lock().unwrap_or_else(|e| e.into_inner()).get_or_insert_default().entry(name.into()).or_default())
+}
+
+fn is_cancelled(name: &str) -> bool {
+    downloads().as_ref().and_then(|d| d.get(name)).is_some_and(|d| d.cancelled)
 }
 
 fn download_problem(error: &(dyn std::error::Error + 'static), label: &str) -> String {
@@ -263,7 +275,11 @@ fn url(repo: &str, file: &str) -> String {
 }
 
 fn client() -> Result<reqwest::blocking::Client, reqwest::Error> {
-    reqwest::blocking::Client::builder().user_agent("vscribe").timeout(None).build()
+    reqwest::blocking::Client::builder()
+        .user_agent("vscribe")
+        .connect_timeout(Duration::from_secs(20))
+        .timeout(Duration::from_secs(60))
+        .build()
 }
 
 fn fetch(name: &str, dir: &Path, files: &[(String, String)]) -> Result<(), Box<dyn std::error::Error>> {
@@ -286,6 +302,9 @@ fn fetch(name: &str, dir: &Path, files: &[(String, String)]) -> Result<(), Box<d
         let part = dir.join(format!("{file}.part"));
         let mut out = fs::File::create(&part)?;
         loop {
+            if is_cancelled(name) {
+                return Err("cancelled".into());
+            }
             let read = response.read(&mut buffer)?;
             if read == 0 {
                 break;
@@ -339,10 +358,17 @@ pub fn remove(name: &str) -> Result<(), String> {
         return Err(format!("The {} model is built in and can't be removed.", model.label));
     }
     if let Source::Download { .. } = model.source {
+        if let Some(download) = downloads().as_mut().and_then(|d| d.get_mut(name)) {
+            download.cancelled = true;
+        }
+        let single = download_lock(name);
+        let _single = single.lock().unwrap_or_else(|e| e.into_inner());
         let folder = model.folder();
         if folder.exists() {
             fs::remove_dir_all(&folder).map_err(|e| format!("Couldn't delete {}: {e}", folder.display()))?;
         }
+        downloads().get_or_insert_default().remove(name);
+        ENSURING.lock().unwrap_or_else(|e| e.into_inner()).get_or_insert_default().remove(name);
     }
     let mut registry = registry();
     let saved = registry.get_or_insert_default();
