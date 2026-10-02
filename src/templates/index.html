@@ -269,7 +269,6 @@
   <div class="busy" x-show="busy" x-cloak x-transition.opacity.duration.150ms role="status" aria-live="polite">
     <div class="busy-card">
       <div class="busy-art" :class="busy && 'is-' + busy.kind">
-        <template x-if="busy?.kind === 'upload'">{{ art_files() }}</template>
         <template x-if="busy?.kind === 'export'">{{ art_archive() }}</template>
       </div>
       <div class="busy-body">

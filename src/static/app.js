@@ -80,16 +80,7 @@ function app() {
 
     watchUploads() {
       const form = document.getElementById("upload");
-      form.addEventListener("htmx:beforeRequest", () => {
-        const count = form.querySelector("#send-files").files.length;
-        const noun = count === 1 ? "voice note" : "voice notes";
-        this.busy = { kind: "upload", title: `Adding ${count} ${noun}`, detail: "Copying them into the app so they can be transcribed.", progress: 0 };
-      });
-      form.addEventListener("htmx:xhr:progress", (event) => {
-        if (this.busy && event.detail.lengthComputable) this.busy.progress = event.detail.loaded / event.detail.total;
-      });
       form.addEventListener("htmx:afterRequest", (event) => {
-        this.busy = null;
         if (!event.detail.successful) return;
         this.staged = [];
         trayStore("readwrite", (store) => store.clear()).catch((error) => console.warn("Couldn't clear staged files", error));
