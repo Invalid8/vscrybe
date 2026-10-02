@@ -13,7 +13,7 @@
           <span class="model-row-meta">
             {%- if o.added %}Added
             {%- elif o.problem %}{{ o.problem }}
-            {%- else %}{{ [o.note, (o.size_mb ~ " MB") if o.size_mb else ""]|select|join(" · ") }}{% endif -%}
+            {%- else %}{{ [o.note, o.languages, (o.size_mb ~ " MB") if o.size_mb else ""]|select|join(" · ") }}{% endif -%}
           </span>
         </button>
       </li>

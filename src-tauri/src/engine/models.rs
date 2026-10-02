@@ -231,11 +231,22 @@ pub fn ensure(name: &str) -> Result<PathBuf, String> {
         }
         Err(error) => {
             log::warn!("Model download failed for {name}: {error}");
-            let message =
-                format!("Couldn't download the {} model. Check your internet connection, then press Retry.", model.label);
+            let message = download_problem(error.as_ref(), &model.label);
             update(&model.name, |d| d.error = Some(message.clone()));
             Err(message)
         }
+    }
+}
+
+fn download_problem(error: &(dyn std::error::Error + 'static), label: &str) -> String {
+    let status = error.downcast_ref::<reqwest::Error>().and_then(reqwest::Error::status);
+    match status {
+        Some(reqwest::StatusCode::UNAUTHORIZED | reqwest::StatusCode::FORBIDDEN) => format!(
+            "Hugging Face refused to send the {label} model: it needs a signed-in account that has accepted its terms. \
+             Download it in your browser instead, then add the folder."
+        ),
+        Some(status) => format!("Couldn't download the {label} model: Hugging Face answered {status}. Press Retry to try again."),
+        None => format!("Couldn't download the {label} model. Check your internet connection, then press Retry."),
     }
 }
 
@@ -353,9 +364,9 @@ fn not_ctranslate2(place: &str, missing: &[String]) -> String {
 const CATALOGUE: &[(&str, &str)] = &[
     ("Systran/faster-whisper-tiny", "Quickest and least accurate"),
     ("Systran/faster-whisper-base", "Between Tiny and Fast"),
-    ("Systran/faster-distil-whisper-small.en", "English only, quicker than Fast"),
+    ("Systran/faster-distil-whisper-small.en", "Quicker than Fast"),
     ("Systran/faster-whisper-medium", "More accurate than Fast, slower"),
-    ("Systran/faster-distil-whisper-large-v3", "Close to Accurate, quicker, English only"),
+    ("Systran/faster-distil-whisper-large-v3", "Close to Accurate, quicker"),
 ];
 
 #[derive(Deserialize)]
@@ -363,6 +374,16 @@ struct RepoInfo {
     id: String,
     #[serde(default)]
     siblings: Vec<Sibling>,
+    #[serde(default)]
+    gated: serde_json::Value,
+    #[serde(default, rename = "cardData")]
+    card: Card,
+}
+
+#[derive(Deserialize, Default)]
+struct Card {
+    #[serde(default)]
+    language: serde_json::Value,
 }
 
 #[derive(Deserialize)]
@@ -376,6 +397,7 @@ pub struct Offer {
     pub repo: String,
     pub note: String,
     pub size_mb: Option<u64>,
+    pub languages: Option<String>,
     pub problem: Option<String>,
     pub added: bool,
 }
@@ -408,7 +430,24 @@ fn check(info: &RepoInfo) -> Checked {
         }
         Err(missing) => (Vec::new(), None, Some(format!("Not in CTranslate2 format: no {}", missing.join(", ")))),
     };
-    Checked { offer: Offer { repo: info.id.clone(), note: String::new(), size_mb, problem, added: false }, files }
+    let gated = !matches!(info.gated, serde_json::Value::Null | serde_json::Value::Bool(false));
+    let problem = problem.or_else(|| gated.then(|| "Needs a Hugging Face account that accepted its terms".to_string()));
+    let languages = languages(&info.card.language);
+    Checked { offer: Offer { repo: info.id.clone(), note: String::new(), size_mb, languages, problem, added: false }, files }
+}
+
+fn languages(card: &serde_json::Value) -> Option<String> {
+    let codes: Vec<&str> = match card {
+        serde_json::Value::String(code) => vec![code.as_str()],
+        serde_json::Value::Array(codes) => codes.iter().filter_map(serde_json::Value::as_str).collect(),
+        _ => return None,
+    };
+    match codes.as_slice() {
+        [] => None,
+        ["en"] => Some("English only".into()),
+        [code] => Some(format!("One language ({code})")),
+        many => Some(format!("{} languages", many.len())),
+    }
 }
 
 fn inspect(repo: &str) -> Result<Checked, String> {
@@ -448,6 +487,7 @@ pub fn catalogue() -> Vec<Offer> {
                     repo: (*repo).into(),
                     note: String::new(),
                     size_mb: None,
+                    languages: None,
                     problem: Some(problem),
                     added: false,
                 });
@@ -469,6 +509,7 @@ pub fn search(query: &str) -> Result<Vec<Offer>, String> {
             ("direction", "-1"),
             ("limit", "20"),
             ("full", "true"),
+            ("cardData", "true"),
         ],
     )?;
     let found: Vec<RepoInfo> =
@@ -561,7 +602,28 @@ mod tests {
         .unwrap();
         let checked = check(&info);
         assert!(checked.offer.problem.as_deref().is_some_and(|p| p.contains("model.bin")));
+        assert_eq!(checked.offer.languages, None);
         assert!(checked.files.is_empty());
+    }
+
+    #[test]
+    fn a_gated_repo_is_offered_but_cannot_be_chosen() {
+        let info: RepoInfo = serde_json::from_str(
+            r#"{"id": "owner/whisper", "gated": "auto", "siblings": [
+                {"rfilename": "config.json"}, {"rfilename": "tokenizer.json"},
+                {"rfilename": "vocabulary.json"}, {"rfilename": "model.bin"}
+            ]}"#,
+        )
+        .unwrap();
+        assert!(check(&info).offer.problem.as_deref().is_some_and(|p| p.contains("accepted its terms")));
+    }
+
+    #[test]
+    fn languages_are_summarised_from_the_model_card() {
+        assert_eq!(languages(&serde_json::json!(["en"])).as_deref(), Some("English only"));
+        assert_eq!(languages(&serde_json::json!("yo")).as_deref(), Some("One language (yo)"));
+        assert_eq!(languages(&serde_json::json!(["en", "fr", "yo"])).as_deref(), Some("3 languages"));
+        assert_eq!(languages(&serde_json::Value::Null), None);
     }
 
     #[test]
