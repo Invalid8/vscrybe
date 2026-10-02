@@ -3,7 +3,7 @@ use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Mutex, MutexGuard};
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread;
 
 use serde::{Deserialize, Serialize};
@@ -177,7 +177,7 @@ struct Download {
 }
 
 static DOWNLOADS: Mutex<Option<HashMap<String, Download>>> = Mutex::new(None);
-static ENSURE: Mutex<()> = Mutex::new(());
+static ENSURING: Mutex<Option<HashMap<String, Arc<Mutex<()>>>>> = Mutex::new(None);
 
 fn downloads() -> MutexGuard<'static, Option<HashMap<String, Download>>> {
     DOWNLOADS.lock().unwrap_or_else(|e| e.into_inner())
@@ -216,7 +216,10 @@ pub fn ensure(name: &str) -> Result<PathBuf, String> {
         let missing = gaps(|file| folder.join(file).is_file()).join(", ");
         return Err(format!("The {} model's folder {} is missing {missing}.", model.label, paths::tilde(&folder)));
     };
-    let _single = ENSURE.lock().unwrap_or_else(|e| e.into_inner());
+    let single = Arc::clone(
+        ENSURING.lock().unwrap_or_else(|e| e.into_inner()).get_or_insert_default().entry(model.name.clone()).or_default(),
+    );
+    let _single = single.lock().unwrap_or_else(|e| e.into_inner());
     if model.is_ready() {
         return Ok(model.folder());
     }
@@ -258,7 +261,12 @@ fn fetch(name: &str, dir: &Path, files: &[(String, String)]) -> Result<(), Box<d
     let missing: Vec<_> = files.iter().filter(|(_, file)| !dir.join(file).is_file()).collect();
     let mut total = 0;
     for (repo, file) in &missing {
-        total += client.head(url(repo, file)).send()?.error_for_status()?.content_length().unwrap_or(0);
+        let head = client.head(url(repo, file)).send()?.error_for_status()?;
+        total += head
+            .headers()
+            .get(reqwest::header::CONTENT_LENGTH)
+            .and_then(|v| v.to_str().ok()?.parse::<u64>().ok())
+            .unwrap_or(0);
     }
     update(name, |d| d.total = total);
     let mut buffer = vec![0; 1 << 16];
