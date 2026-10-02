@@ -23,7 +23,6 @@ gstreamer = "0.25"
 gstreamer-app = "0.25"
 gstreamer-pbutils = "0.25"
 thiserror = "2"
-ct2rs = { version = "0.10.1", default-features = false, features = ["whisper", "dnnl", "openmp-runtime-comp"] }
 tokenizers = "0.22"
 mel_spec = "0.3"
 rustfft = "6"
@@ -48,6 +47,13 @@ tower = { version = "0.5", features = ["util"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 webkit2gtk = "2"
+ct2rs = { version = "0.10.1", default-features = false, features = ["whisper", "dnnl", "openmp-runtime-comp"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+ct2rs = { version = "0.10.1", default-features = false, features = ["whisper", "dnnl", "openmp-runtime-comp"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+ct2rs = { version = "0.10.1", default-features = false, features = ["whisper", "accelerate", "ruy"] }
 
 [profile.dev]
 opt-level = 1

@@ -5,6 +5,7 @@ pub mod web;
 use std::fs::{self, OpenOptions};
 use std::net::{Ipv4Addr, TcpListener};
 use std::path::{Path, PathBuf};
+#[cfg(target_os = "linux")]
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::thread;
 
@@ -84,7 +85,13 @@ pub fn start_server(store: Store, listener: TcpListener) -> Result<String, Strin
 pub fn startup_problem() -> Option<String> {
     let missing = engine::missing_elements();
     (!missing.is_empty()).then(|| {
-        format!("Audio decoding needs GStreamer packages that aren't installed. Run: sudo apt install {}.", missing.join(" "))
+        if cfg!(target_os = "linux") {
+            format!("Audio decoding needs GStreamer packages that aren't installed. Run: sudo apt install {}.", missing.join(" "))
+        } else {
+            "Audio decoding needs GStreamer, which isn't installed. Install it from \
+             https://gstreamer.freedesktop.org/download/ and start vScribe again."
+                .into()
+        }
     })
 }
 
@@ -120,8 +127,6 @@ fn allow_microphone(window: &WebviewWindow) {
     });
 }
 
-static LAST_NOTIFICATION: AtomicU32 = AtomicU32::new(0);
-
 fn notify_finished(app: &AppHandle, batch: Batch) {
     let focused = app.get_webview_window("main").and_then(|w| w.is_focused().ok()).unwrap_or(false);
     if focused || batch.total == 0 {
@@ -134,28 +139,41 @@ fn notify_finished(app: &AppHandle, batch: Batch) {
         failed => ("Transcription finished", format!("{} ready, {failed} couldn't be transcribed.", notes(batch.total - failed))),
     };
     let app = app.clone();
-    thread::spawn(move || {
-        let shown = notify_rust::Notification::new()
-            .id(LAST_NOTIFICATION.load(Ordering::Relaxed))
-            .appname("vScribe")
-            .summary(title)
-            .body(&body)
-            .icon("vscribe")
-            .hint(notify_rust::Hint::DesktopEntry("vscribe".into()))
-            .action("default", "Open vScribe")
-            .show();
-        match shown {
-            Ok(notification) => {
-                LAST_NOTIFICATION.store(notification.id(), Ordering::Relaxed);
-                notification.wait_for_action(|action| {
-                    if action == "default" {
-                        bring_to_front(&app);
-                    }
-                })
-            }
-            Err(error) => log::warn!("Couldn't show a notification: {error}"),
+    thread::spawn(move || show_notification(&app, title, &body));
+}
+
+#[cfg(target_os = "linux")]
+static LAST_NOTIFICATION: AtomicU32 = AtomicU32::new(0);
+
+#[cfg(target_os = "linux")]
+fn show_notification(app: &AppHandle, title: &str, body: &str) {
+    let shown = notify_rust::Notification::new()
+        .id(LAST_NOTIFICATION.load(Ordering::Relaxed))
+        .appname("vScribe")
+        .summary(title)
+        .body(body)
+        .icon("vscribe")
+        .hint(notify_rust::Hint::DesktopEntry("vscribe".into()))
+        .action("default", "Open vScribe")
+        .show();
+    match shown {
+        Ok(notification) => {
+            LAST_NOTIFICATION.store(notification.id(), Ordering::Relaxed);
+            notification.wait_for_action(|action| {
+                if action == "default" {
+                    bring_to_front(app);
+                }
+            })
         }
-    });
+        Err(error) => log::warn!("Couldn't show a notification: {error}"),
+    }
+}
+
+#[cfg(not(target_os = "linux"))]
+fn show_notification(_: &AppHandle, title: &str, body: &str) {
+    if let Err(error) = notify_rust::Notification::new().appname("vScribe").summary(title).body(body).show() {
+        log::warn!("Couldn't show a notification: {error}");
+    }
 }
 
 fn bring_to_front(app: &AppHandle) {
