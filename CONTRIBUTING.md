@@ -29,7 +29,7 @@ sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev build-essential
 plus [Rust](https://rustup.rs), Node.js 20+ and, for the browser tests, [uv](https://docs.astral.sh/uv/). The GStreamer
 plugins are only for playing audio inside the Linux app; decoding uses FFmpeg built into vScribe.
 
-Build that FFmpeg once (about a minute; `src-tauri/.cargo/config.toml` points cargo at it):
+Build that FFmpeg once (about a minute; `.cargo/config.toml` points cargo at it):
 
 ```sh
 packaging/ffmpeg/build.sh
