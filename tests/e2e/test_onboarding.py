@@ -1,5 +1,7 @@
 from playwright.sync_api import Page, expect
 
+from .conftest import VERSION
+
 
 def stored(page: Page, key: str):
     return page.evaluate("(key) => localStorage.getItem(key)", key)
@@ -64,8 +66,8 @@ def test_about_replays_the_intro(returning_user: Page):
 def test_about_report_link_fills_in_the_version(returning_user: Page):
     returning_user.get_by_role("button", name="About vScribe").click()
     about = returning_user.locator("dialog.about").filter(has_text="Found a problem?")
-    expect(about.locator(".about-version")).to_have_text("Version 0.2.0")
+    expect(about.locator(".about-version")).to_have_text(f"Version {VERSION}")
     link = about.get_by_role("link", name="Report an issue")
     href = link.get_attribute("href")
-    assert href.startswith("mailto:b.fadamitan2019@gmail.com?subject=vScribe%20issue%20(0.2.0)&body=")
+    assert href.startswith(f"mailto:b.fadamitan2019@gmail.com?subject=vScribe%20issue%20({VERSION})&body=")
     assert "What%20happened%3A" in href

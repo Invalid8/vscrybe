@@ -1,5 +1,6 @@
 import os
 import subprocess
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,7 @@ ROOT = Path(__file__).parent.parent.parent
 FIXTURES = ROOT / "tests" / "fixtures"
 VN = Path(os.environ.get("VSCRIBE_BIN", ROOT / "src-tauri" / "target" / "debug" / "vscribe"))
 READY = "VSCRIBE_READY "
+VERSION = tomllib.loads((ROOT / "src-tauri" / "Cargo.toml").read_text())["package"]["version"]
 
 RETURNING_USER = """
 localStorage.setItem("vscribe-onboarded", "yes");
