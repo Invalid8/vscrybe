@@ -8,7 +8,7 @@ and the project uses [Semantic Versioning](https://semver.org).
 ### Added
 - Settings window (gear beside About) with Models, Hugging Face, This computer, Appearance and About tabs. Add
   Whisper models from a Hugging Face list or a folder on this computer; a downloading model shows its progress.
-- Windows and macOS builds.
+- Windows and macOS builds, for both Apple silicon and Intel Macs.
 
 ### Changed
 - Audio is decoded by FFmpeg built into vScribe, so nothing has to be installed on any system. It is also more
