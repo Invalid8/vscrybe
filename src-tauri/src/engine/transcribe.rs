@@ -1,4 +1,4 @@
-use std::ops::Range;
+use std::ops::{ControlFlow, Range};
 use std::path::Path;
 
 use ct2rs::sys::{StorageView, Whisper};
@@ -108,7 +108,12 @@ impl Engine {
         })
     }
 
-    pub fn transcribe(&self, path: &Path, language: &str, on_progress: &mut dyn FnMut(f64)) -> Result<Transcript, Error> {
+    pub fn transcribe(
+        &self,
+        path: &Path,
+        language: &str,
+        on_progress: &mut dyn FnMut(f64) -> ControlFlow<()>,
+    ) -> Result<Transcript, Error> {
         let samples = decode(path)?;
         let duration = samples.len() as f64 / RATE as f64;
         let chunks = speech_chunks(&samples);
@@ -123,7 +128,11 @@ impl Engine {
             let mut seek = chunk.start;
             while seek < chunk.end {
                 let window = &samples[seek..chunk.end];
-                let attempt = self.decode_window(window, &language).map_err(Error::Transcription)?;
+                let done = (seek as f64 / samples.len() as f64).min(1.0);
+                let decoded = self.decode_window(window, &language, &mut || on_progress(done));
+                let ControlFlow::Continue(attempt) = decoded.map_err(Error::Transcription)? else {
+                    return Err(Error::Interrupted);
+                };
                 let resumed = seek > chunk.start;
                 let (found, consumed) = if attempt.is_silence() || (resumed && !attempt.is_confident_speech()) {
                     (Vec::new(), window.len())
@@ -137,7 +146,9 @@ impl Engine {
                     text: s.text,
                 }));
                 seek += consumed;
-                on_progress((seek as f64 / samples.len() as f64).min(1.0));
+                if on_progress((seek as f64 / samples.len() as f64).min(1.0)).is_break() {
+                    return Err(Error::Interrupted);
+                }
             }
         }
         Ok(Transcript { language, duration: round2(duration), segments })
@@ -151,12 +162,20 @@ impl Engine {
         Ok(best.language.trim_start_matches("<|").trim_end_matches("|>").to_string())
     }
 
-    fn decode_window(&self, audio: &[f32], language: &str) -> Result<Attempt, String> {
+    fn decode_window(
+        &self,
+        audio: &[f32],
+        language: &str,
+        keep_going: &mut dyn FnMut() -> ControlFlow<()>,
+    ) -> Result<ControlFlow<(), Attempt>, String> {
         let mut features = self.log_mel.compute(audio);
         let view = StorageView::new(&[1, self.log_mel.n_mels, FRAMES], &mut features, Device::CPU).map_err(|e| e.to_string())?;
         let prompt = vec![vec!["<|startoftranscript|>".to_string(), format!("<|{language}|>"), "<|transcribe|>".into()]];
         let mut best: Option<Attempt> = None;
         for temperature in TEMPERATURES {
+            if temperature > 0.0 && keep_going().is_break() {
+                return Ok(ControlFlow::Break(()));
+            }
             let options = WhisperOptions {
                 beam_size: if temperature == 0.0 { BEAM_SIZE } else { 1 },
                 sampling_temperature: if temperature == 0.0 { 1.0 } else { temperature },
@@ -178,13 +197,18 @@ impl Engine {
                 pieces,
             };
             if attempt.is_silence() || attempt.is_good() {
-                return Ok(attempt);
+                return Ok(ControlFlow::Continue(attempt));
             }
             if !attempt.repeats() && best.as_ref().is_none_or(|b| attempt.avg_log_prob > b.avg_log_prob) {
                 best = Some(attempt);
             }
         }
-        Ok(best.unwrap_or(Attempt { pieces: Vec::new(), avg_log_prob: f32::NEG_INFINITY, no_speech_prob: 1.0, compression: 0.0 }))
+        Ok(ControlFlow::Continue(best.unwrap_or(Attempt {
+            pieces: Vec::new(),
+            avg_log_prob: f32::NEG_INFINITY,
+            no_speech_prob: 1.0,
+            compression: 0.0,
+        })))
     }
 
     fn pieces(&self, ids: Vec<usize>) -> Result<Vec<Piece>, String> {

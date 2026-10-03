@@ -1,5 +1,6 @@
 use std::fs;
 use std::io::Read;
+use std::ops::ControlFlow;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
@@ -155,7 +156,7 @@ fn transcribe(paths: &[PathBuf], model: &str, language: &str, timestamps: bool, 
             continue;
         }
         eprintln!("...   {}", path.display());
-        let result = engine.transcribe(path, language, &mut |_| {}).map_err(|e| e.to_string()).and_then(|t| {
+        let result = engine.transcribe(path, language, &mut |_| ControlFlow::Continue(())).map_err(|e| e.to_string()).and_then(|t| {
             let text = if timestamps { t.timestamped() } else { t.text() };
             if stdout {
                 println!("{text}");
@@ -178,8 +179,9 @@ fn transcribe(paths: &[PathBuf], model: &str, language: &str, timestamps: bool, 
 
 fn serve(port: u16, exit_with_stdin: bool) -> ExitCode {
     crate::setup_logging();
-    let url = match crate::open_store().and_then(|store| crate::start_server(store, crate::bind(port)?)) {
-        Ok(url) => url,
+    let started = crate::open_store().and_then(|store| Ok((store.clone(), crate::start_server(store, crate::bind(port)?)?)));
+    let (store, url) = match started {
+        Ok(started) => started,
         Err(error) => {
             eprintln!("{error}");
             return ExitCode::FAILURE;
@@ -190,6 +192,7 @@ fn serve(port: u16, exit_with_stdin: bool) -> ExitCode {
         let mut sink = [0; 1024];
         let mut stdin = std::io::stdin();
         while stdin.read(&mut sink).is_ok_and(|n| n > 0) {}
+        store.shutdown();
         return ExitCode::SUCCESS;
     }
     loop {

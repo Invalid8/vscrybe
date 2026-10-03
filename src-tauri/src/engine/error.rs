@@ -8,4 +8,6 @@ pub enum Error {
     Undecodable(String),
     #[error("Transcription failed: {0}")]
     Transcription(String),
+    #[error("Transcription was interrupted.")]
+    Interrupted,
 }

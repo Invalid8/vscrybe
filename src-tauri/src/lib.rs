@@ -11,7 +11,7 @@ use std::thread;
 
 use simplelog::{ColorChoice, CombinedLogger, ConfigBuilder, LevelFilter, TermLogger, TerminalMode, WriteLogger};
 use tauri::webview::{DownloadEvent, PermissionKind, PermissionResponse};
-use tauri::{AppHandle, Manager, Url, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Manager, RunEvent, Url, WebviewUrl, WebviewWindowBuilder};
 
 use engine::store::{Batch, Store};
 
@@ -180,6 +180,7 @@ pub fn run() {
             let started = open_store().and_then(|store| {
                 let handle = app.handle().clone();
                 store.on_batch_finished(move |batch| notify_finished(&handle, batch));
+                app.manage(store.clone());
                 start_server(store, bind_remembered_port()?)
             });
             let (url, error) = match started.and_then(|u| u.parse::<Url>().map_err(|e| e.to_string())) {
@@ -243,6 +244,11 @@ pub fn run() {
             let _ = window;
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("failed to start vScribe");
+        .build(tauri::generate_context!())
+        .expect("failed to start vScribe")
+        .run(|app, event| {
+            if let (RunEvent::Exit, Some(store)) = (event, app.try_state::<Store>()) {
+                store.shutdown();
+            }
+        });
 }

@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 use std::fs;
-use std::panic::{self, AssertUnwindSafe};
 use std::io;
+use std::ops::ControlFlow;
+use std::panic::{self, AssertUnwindSafe};
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{Receiver, Sender, channel};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
-use std::thread;
+use std::thread::{self, JoinHandle};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::de::DeserializeOwned;
@@ -155,6 +157,8 @@ pub struct Store {
     state: Arc<Mutex<State>>,
     queue: Sender<String>,
     batch_listener: Arc<OnceLock<BatchListener>>,
+    stopping: Arc<AtomicBool>,
+    worker: Arc<Mutex<Option<JoinHandle<()>>>>,
 }
 
 impl Store {
@@ -168,7 +172,14 @@ impl Store {
         let _ = fs::remove_dir_all(root.join("incoming"));
         fs::create_dir_all(root.join("incoming"))?;
         let (queue, pending) = channel();
-        let store = Self { root, state: Arc::default(), queue, batch_listener: Arc::default() };
+        let store = Self {
+            root,
+            state: Arc::default(),
+            queue,
+            batch_listener: Arc::default(),
+            stopping: Arc::default(),
+            worker: Arc::default(),
+        };
         let mut resume = Vec::new();
         {
             let mut state = store.lock();
@@ -195,8 +206,20 @@ impl Store {
             store.enqueue(&mut store.lock(), &id);
         }
         let worker = store.clone();
-        thread::spawn(move || worker.work(pending));
+        *store.worker.lock().unwrap_or_else(|e| e.into_inner()) = Some(thread::spawn(move || worker.work(pending)));
         Ok(store)
+    }
+
+    pub fn shutdown(&self) {
+        self.stopping.store(true, Ordering::SeqCst);
+        let _ = self.queue.send(String::new());
+        if let Some(worker) = self.worker.lock().unwrap_or_else(|e| e.into_inner()).take() {
+            let _ = worker.join();
+        }
+    }
+
+    fn stopping(&self) -> bool {
+        self.stopping.load(Ordering::SeqCst)
     }
 
     pub fn on_batch_finished(&self, listener: impl Fn(Batch) + Send + Sync + 'static) {
@@ -342,6 +365,9 @@ impl Store {
             Err(error) => log::error!("Couldn't load the {} model: {error}", models::DEFAULT),
         }
         for id in pending {
+            if self.stopping() {
+                return;
+            }
             let Some(job) = self.lock().jobs.get(&id).cloned() else {
                 continue;
             };
@@ -357,7 +383,10 @@ impl Store {
                     None => loaded.insert((job.model.clone(), Engine::load(&job.model)?)),
                 };
                 self.update(&id, |j| j.status = "running".into());
-                let mut progress = |value: f64| self.update(&id, |j| j.progress = value);
+                let mut progress = |value: f64| {
+                    self.update(&id, |j| j.progress = value);
+                    if self.stopping() { ControlFlow::Break(()) } else { ControlFlow::Continue(()) }
+                };
                 engine.transcribe(&job.folder(&self.root).join(&job.audio), &job.language, &mut progress).map_err(|e| {
                     if let Error::Undecodable(detail) = &e {
                         log::warn!("Couldn't decode {}: {detail}", job.name);
@@ -365,6 +394,9 @@ impl Store {
                     e.to_string()
                 })
             }));
+            if self.stopping() && !matches!(attempt, Ok(Ok(_))) {
+                return;
+            }
             let result = attempt.unwrap_or_else(|_| {
                 loaded = None;
                 Err("vScribe hit an internal error on this file. Try another model, or report it from About.".into())
