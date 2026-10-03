@@ -64,6 +64,7 @@ as well as Chromium.
 ```sh
 npx tauri build
 # Linux   -> src-tauri/target/release/bundle/deb/vscribe_<version>_amd64.deb
+#            src-tauri/target/release/bundle/appimage/vscribe_<version>_amd64.AppImage
 # Windows -> src-tauri/target/release/bundle/nsis/vScribe_<version>_x64-setup.exe
 # macOS   -> src-tauri/target/release/bundle/dmg/vScribe_<version>_<arch>.dmg
 ```

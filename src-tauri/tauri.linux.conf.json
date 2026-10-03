@@ -15,7 +15,14 @@
           "gstreamer1.0-libav",
           "libgomp1"
         ]
+      },
+      "appimage": {
+        "bundleMediaFramework": true
       }
-    }
+    },
+    "targets": [
+      "deb",
+      "appimage"
+    ]
   }
 }

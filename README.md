@@ -26,11 +26,11 @@ Convert audio and voice notes to text you can copy, search and export, without u
 
 ### Linux (Ubuntu, Debian, Mint, Pop!_OS)
 
-Download the latest `vscribe_<version>_amd64.deb` from
+Download the latest `vScribe-linux-amd64.deb` from
 [Releases](https://github.com/Invalid8/vscribe/releases), then:
 
 ```sh
-sudo apt install ./vscribe_*_amd64.deb
+sudo apt install ./vScribe-linux-amd64.deb
 ```
 
 Open **vScribe** from your app menu. The first time you transcribe, it downloads the Fast model (about 480 MB).
@@ -38,9 +38,18 @@ Open **vScribe** from your app menu. The first time you transcribe, it downloads
 Uninstall with `sudo apt remove vscribe`. Your sessions stay in `~/.local/share/vscribe` until you delete
 that folder.
 
+### Any other Linux (AppImage)
+
+Download `vScribe-linux-amd64.AppImage` from [Releases](https://github.com/Invalid8/vscribe/releases), then:
+
+```sh
+chmod +x vScribe-linux-amd64.AppImage
+./vScribe-linux-amd64.AppImage
+```
+
 ### Windows 10 and 11
 
-Download `vScribe_<version>_x64-setup.exe` from [Releases](https://github.com/Invalid8/vscribe/releases) and run it.
+Download `vScribe-windows-x64-setup.exe` from [Releases](https://github.com/Invalid8/vscribe/releases) and run it.
 The installer isn't code-signed yet, so Windows may show "Windows protected your PC": choose **More info → Run
 anyway**. Uninstall from **Settings → Apps**.
 
@@ -48,8 +57,8 @@ anyway**. Uninstall from **Settings → Apps**.
 
 Download the `.dmg` for your Mac from [Releases](https://github.com/Invalid8/vscribe/releases):
 
-- `vScribe_<version>_aarch64.dmg` for Apple silicon (M1 and later)
-- `vScribe_<version>_x64.dmg` for Intel Macs
+- `vScribe-macos-arm64.dmg` for Apple silicon (M1 and later)
+- `vScribe-macos-x64.dmg` for Intel Macs
 
 Open it and drag **vScribe** into Applications. The app isn't notarized by Apple yet, so the first launch is
 blocked: open **System Settings → Privacy & Security**, scroll down and click **Open Anyway** next to vScribe.
