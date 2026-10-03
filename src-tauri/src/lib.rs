@@ -10,7 +10,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::thread;
 
 use simplelog::{ColorChoice, CombinedLogger, ConfigBuilder, LevelFilter, TermLogger, TerminalMode, WriteLogger};
-use tauri::webview::DownloadEvent;
+use tauri::webview::{DownloadEvent, PermissionKind, PermissionResponse};
 use tauri::{AppHandle, Manager, Url, WebviewUrl, WebviewWindowBuilder};
 
 use engine::store::{Batch, Store};
@@ -99,18 +99,13 @@ fn unique_path(dir: &Path, name: &str) -> PathBuf {
 }
 
 #[cfg(target_os = "linux")]
-fn allow_microphone(window: &tauri::WebviewWindow) {
-    use webkit2gtk::{PermissionRequestExt, SettingsExt, WebViewExt};
+fn enable_media_stream(window: &tauri::WebviewWindow) {
+    use webkit2gtk::{SettingsExt, WebViewExt};
     let _ = window.with_webview(|webview| {
-        let view = webview.inner();
-        if let Some(settings) = WebViewExt::settings(&view) {
+        if let Some(settings) = WebViewExt::settings(&webview.inner()) {
             settings.set_enable_media_stream(true);
             settings.set_enable_mediasource(true);
         }
-        view.connect_permission_request(|_, request| {
-            request.allow();
-            true
-        });
     });
 }
 
@@ -201,6 +196,10 @@ pub fn run() {
                 .min_inner_size(420.0, 560.0)
                 .decorations(false)
                 .disable_drag_drop_handler()
+                .on_permission_request(|_, kind| match kind {
+                    PermissionKind::Microphone => PermissionResponse::Allow,
+                    _ => PermissionResponse::Default,
+                })
                 .on_navigation(|url| {
                     if is_app_url(url) {
                         return true;
@@ -239,7 +238,7 @@ pub fn run() {
             }
             let window = builder.build()?;
             #[cfg(target_os = "linux")]
-            allow_microphone(&window);
+            enable_media_stream(&window);
             #[cfg(not(target_os = "linux"))]
             let _ = window;
             Ok(())

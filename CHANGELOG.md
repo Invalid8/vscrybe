@@ -20,6 +20,8 @@ First public release, now also for Windows and macOS.
 - Only one model is kept in memory at a time, and uploads are written to disk instead of held in memory.
 
 ### Fixed
+- On Windows, recording showed a second, browser-style microphone prompt naming the app's local address and
+  port. vScribe's own consent dialog is now the only one.
 - Long stretches of speech could be left out when Whisper stopped early in a 30-second window. Transcription now
   resumes where it stopped, retries unreliable output and discards repetition loops.
 - Files with a few undecodable packets (some `.amr` recordings) failed entirely; those packets are now skipped.
