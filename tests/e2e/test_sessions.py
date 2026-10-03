@@ -21,6 +21,22 @@ def expect_toast(page: Page, message: str, kind: str = "success"):
     expect(page.locator(f".toast.is-{kind} p", has_text=message)).to_be_visible()
 
 
+def expect_tray_stored(page: Page, count: int):
+    page.wait_for_function(
+        """(count) => new Promise((resolve) => {
+          const open = indexedDB.open("vscribe", 1);
+          open.onsuccess = () => {
+            const request = open.result.transaction("staged").objectStore("staged").count();
+            request.onsuccess = () => {
+              open.result.close();
+              resolve(request.result === count);
+            };
+          };
+        })""",
+        arg=count,
+    )
+
+
 def add(page: Page, *names: str):
     page.set_input_files("#pick-files", [FIXTURES / n for n in names])
     page.get_by_role("button", name="Send", exact=True).click()
@@ -239,6 +255,7 @@ def test_staged_notes_survive_a_reload_and_can_be_previewed(returning_user: Page
     page = returning_user
     page.set_input_files("#pick-files", [FIXTURES / "jfk.opus"])
     expect(page.locator(".chip")).to_have_count(1)
+    expect_tray_stored(page, 1)
     page.reload()
     expect(page.locator(".chip-name")).to_have_text("jfk.opus")
 
@@ -249,5 +266,6 @@ def test_staged_notes_survive_a_reload_and_can_be_previewed(returning_user: Page
 
     page.get_by_role("button", name="Send", exact=True).click()
     expect(page.locator(".vn-name")).to_have_text("jfk.opus")
+    expect_tray_stored(page, 0)
     page.reload()
     expect(page.locator(".chip")).to_have_count(0)
