@@ -38,12 +38,28 @@ Open **vScribe** from your app menu. The first time you transcribe, it downloads
 Uninstall with `sudo apt remove vscribe`. Your sessions stay in `~/.local/share/vscribe` until you delete
 that folder.
 
-Windows and macOS builds come from the same release workflow and are being tested. To build from source, see
-[CONTRIBUTING.md](CONTRIBUTING.md).
+### Windows 10 and 11
+
+Download `vScribe_<version>_x64-setup.exe` from [Releases](https://github.com/Invalid8/vscribe/releases) and run it.
+The installer isn't code-signed yet, so Windows may show "Windows protected your PC": choose **More info → Run
+anyway**. Uninstall from **Settings → Apps**.
+
+### macOS 11 or later
+
+Download the `.dmg` for your Mac from [Releases](https://github.com/Invalid8/vscribe/releases):
+
+- `vScribe_<version>_aarch64.dmg` for Apple silicon (M1 and later)
+- `vScribe_<version>_x64.dmg` for Intel Macs
+
+Open it and drag **vScribe** into Applications. The app isn't notarized by Apple yet, so the first launch is
+blocked: open **System Settings → Privacy & Security**, scroll down and click **Open Anyway** next to vScribe.
+
+To build from source, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Command line
 
-The `.deb` installs a `vscribe` command.
+The `.deb` installs a `vscribe` command. On macOS it is `/Applications/vScribe.app/Contents/MacOS/vscribe`, and on
+Windows `vscribe.exe` in vScribe's install folder.
 
 ```sh
 vscribe transcribe ~/Recordings/                     # writes a .txt next to each voice note
@@ -57,11 +73,11 @@ Files that already have a `.txt` are skipped unless you pass `--force`.
 
 ## Where things are kept
 
-| What | Linux |
-| --- | --- |
-| Sessions, audio copies, transcripts | `~/.local/share/vscribe` |
-| Downloaded models | `~/.cache/vscribe/models` |
-| Log file | `~/.local/state/vscribe/log/vscribe.log` |
+| What | Linux | macOS | Windows |
+| --- | --- | --- | --- |
+| Sessions, audio copies, transcripts | `~/.local/share/vscribe` | `~/Library/Application Support/vscribe` | `%APPDATA%\vscribe` |
+| Downloaded models | `~/.cache/vscribe/models` | `~/Library/Caches/vscribe/models` | `%LOCALAPPDATA%\vscribe\models` |
+| Log file | `~/.local/state/vscribe/log/vscribe.log` | `~/Library/Caches/vscribe/log/vscribe.log` | `%LOCALAPPDATA%\vscribe\log\vscribe.log` |
 
 Your original files are never changed or moved. Deleting a session deletes its copies.
 
@@ -69,8 +85,9 @@ Your original files are never changed or moved. Deleting a session deletes its c
 
 vScribe is a single Rust program built with [Tauri](https://tauri.app). It runs a small web server on a
 private local port (axum + MiniJinja templates, with an htmx + Alpine.js interface) and shows it in a native window.
-Audio is decoded with GStreamer and transcribed with [CTranslate2](https://github.com/OpenNMT/CTranslate2), the same
-engine faster-whisper uses. Nothing listens on the network.
+Audio is decoded with FFmpeg built into the app and transcribed with
+[CTranslate2](https://github.com/OpenNMT/CTranslate2), the same engine faster-whisper uses. Nothing listens on the
+network.
 
 <img alt="The welcome screen of vScribe" src="docs/screenshots/welcome.png" width="640">
 

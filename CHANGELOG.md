@@ -5,6 +5,10 @@ and the project uses [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-03
+
+First public release, now also for Windows and macOS.
+
 ### Added
 - Settings window (gear beside About) with Models, Hugging Face, This computer, Appearance and About tabs. Add
   Whisper models from a Hugging Face list or a folder on this computer; a downloading model shows its progress.
@@ -46,9 +50,10 @@ Renamed to **vScribe** and rewritten as a native Rust app. Your sessions and dow
 - A notification when transcription finishes while the app is in the background.
 - "Saved to Downloads" toasts with Show in folder, and progress panels for adding files and exporting.
 
-## [0.1.0] - 2026-10-01
+## 0.1.0 - 2026-10-01
 
 First release (Python).
 
-[0.2.0]: https://github.com/Invalid8/vscribe/releases/tag/v0.2.0
-[0.1.0]: https://github.com/Invalid8/vscribe/releases/tag/v0.1.0
+[Unreleased]: https://github.com/Invalid8/vscribe/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Invalid8/vscribe/releases/tag/v0.3.0
+[0.2.0]: https://github.com/Invalid8/vscribe/tree/177b7d3

@@ -1,6 +1,6 @@
 [package]
 name = "vscribe"
-version = "0.2.0"
+version = "0.3.0"
 description = "Convert audio and voice notes to text, on your own computer"
 authors = ["vScribe contributors <b.fadamitan2019@gmail.com>"]
 license = "MIT"

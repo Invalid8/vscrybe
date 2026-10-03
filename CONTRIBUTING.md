@@ -8,7 +8,7 @@ we can agree on the approach before you spend time on it.
 ```
 src/                  the pages: MiniJinja templates, CSS, htmx/Alpine scripts, fonts, splash screen
 src-tauri/            the app (Tauri 2, Rust)
-  src/engine/         sessions and queue, GStreamer decoding, CTranslate2 transcription, model download
+  src/engine/         sessions and queue, FFmpeg decoding, CTranslate2 transcription, model download
   src/web/            axum routes that render the templates and serve audio
   src/cli.rs          `vscribe transcribe` and `vscribe serve`
   src/lib.rs          the window: starts the server in-process and loads it
@@ -59,14 +59,22 @@ The browser tests start `vscribe serve` with a throwaway data folder, so they ne
 use the real Fast model from your cache. Please add or update tests with every change, and check UI changes in Firefox
 as well as Chromium.
 
-## Building the .deb
+## Building the installers
 
 ```sh
 npx tauri build
-# -> src-tauri/target/release/bundle/deb/vscribe_<version>_amd64.deb
+# Linux   -> src-tauri/target/release/bundle/deb/vscribe_<version>_amd64.deb
+# Windows -> src-tauri/target/release/bundle/nsis/vScribe_<version>_x64-setup.exe
+# macOS   -> src-tauri/target/release/bundle/dmg/vScribe_<version>_<arch>.dmg
 ```
 
-Release builds run on Ubuntu 22.04 so the package installs on older systems too.
+On Windows, build FFmpeg from an MSYS2 shell that inherits an MSVC developer environment (see
+`.github/workflows/release.yml`). Release builds run on Ubuntu 22.04 so the package installs on older systems too.
+
+## Releasing
+
+Move the Unreleased entries in `CHANGELOG.md` under the new version, bump `version` in `src-tauri/Cargo.toml`, and
+push a `v<version>` tag. The Release workflow builds every platform and attaches the installers to a draft release.
 
 ## Style
 
