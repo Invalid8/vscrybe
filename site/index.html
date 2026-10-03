@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>vScribe: voice notes to text, free and offline</title>
+  <meta name="description" content="Turn WhatsApp, Telegram and phone voice notes into text on your own computer. Free, private and works offline. For Windows, Mac and Linux.">
+  <link rel="canonical" href="https://vscribe.dalgoridim.com/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="vScribe">
+  <meta property="og:url" content="https://vscribe.dalgoridim.com/">
+  <meta property="og:title" content="vScribe: voice notes to text, on your computer">
+  <meta property="og:description" content="Free, private and works offline. For Windows, Mac and Linux.">
+  <meta property="og:image" content="https://vscribe.dalgoridim.com/assets/img/og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="vScribe: voice notes to text, on your computer">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#ecebea">
+  <link rel="icon" href="/assets/img/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+  <link rel="preload" href="/assets/fonts/bricolage-grotesque-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/onest-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/site.css">
+  <script>try { document.documentElement.dataset.theme = localStorage.getItem("theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); } catch {}</script>
+  <script defer src="/assets/site.js"></script>
+  <script defer src="/assets/alpine.min.js"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "vScribe",
+    "description": "Converts audio recordings and voice notes into text on your own computer with OpenAI's open Whisper models.",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Windows 10, Windows 11, macOS 11 or later, Linux",
+    "url": "https://vscribe.dalgoridim.com/",
+    "downloadUrl": "https://vscribe.dalgoridim.com/download/",
+    "image": "https://vscribe.dalgoridim.com/assets/img/og.jpg",
+    "license": "https://opensource.org/licenses/MIT",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+</head>
+<body x-data>
+  <header class="nav" x-data="{ open: false }">
+    <a class="brand" href="/"><img src="/assets/img/icon.svg" alt="">vScribe</a>
+    <nav class="nav-links" :class="open && 'open'" @click="open = false">
+      <a href="#features">Features</a>
+      <a href="#languages">Languages</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="btn btn-raised btn-round" type="button" @click="$store.theme.toggle()" :aria-label="$store.theme.dark ? 'Use light theme' : 'Use dark theme'" aria-label="Switch theme">
+        <svg class="icon"><use :href="$store.theme.dark ? '/assets/icons.svg#sun' : '/assets/icons.svg#moon'" href="/assets/icons.svg#moon"/></svg>
+      </button>
+      <a class="btn btn-raised stars" href="https://github.com/Invalid8/vscribe" aria-label="vScribe on GitHub">
+        <svg class="icon"><use href="/assets/icons.svg#star"/></svg>
+        <span x-text="$store.release.stars" x-show="$store.release.stars" x-cloak></span>
+        <svg class="icon"><use href="/assets/icons.svg#github"/></svg>
+      </a>
+      <a class="btn btn-primary" href="/download/">Download</a>
+      <button class="btn btn-raised btn-round menu" type="button" @click="open = !open" :aria-expanded="open" aria-label="Menu">
+        <svg class="icon"><use :href="open ? '/assets/icons.svg#x' : '/assets/icons.svg#list'" href="/assets/icons.svg#list"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Voice notes to text,<br> right on your computer.</h1>
+      <p>Drop in WhatsApp, Telegram or phone recordings and get clean, searchable text in about the time it takes to play them. Nothing is ever uploaded.</p>
+      <div class="cta" x-show="!$store.device.phone">
+        <a class="btn btn-primary btn-lg" :href="$store.release.url($store.device.platform.file)" href="/download/">
+          <svg class="icon"><use :href="'/assets/icons.svg#' + $store.device.platform.icon" href="/assets/icons.svg#download-simple"/></svg>
+          <span x-text="'Download for ' + $store.device.platform.name">Download vScribe</span>
+          <svg class="icon"><use href="/assets/icons.svg#arrow-down"/></svg>
+        </a>
+        <small><span x-text="['Free', $store.release.size($store.device.platform.file), $store.device.platform.detail].filter(Boolean).join(' · ')">Free for Windows, macOS and Linux</span> · <a class="link" href="/download/">Other downloads</a></small>
+      </div>
+      <div class="cta" x-show="$store.device.phone" x-cloak x-data="share">
+        <button class="btn btn-primary btn-lg btn-block" type="button" @click="send()">
+          <svg class="icon"><use href="/assets/icons.svg#desktop-tower"/></svg>Send to my computer
+        </button>
+        <button class="btn btn-raised btn-block" type="button" @click="copy()">
+          <svg class="icon"><use :href="copied ? '/assets/icons.svg#check' : '/assets/icons.svg#link'" href="/assets/icons.svg#link"/></svg>
+          <span x-text="copied ? 'Link copied' : 'Copy link'">Copy link</span>
+        </button>
+        <small>vScribe is a free app for Windows, Mac and Linux computers.</small>
+      </div>
+      <figure class="stage">
+        <img class="shot light-only" src="/assets/img/hero-app-light.webp" width="2240" height="1400" alt="A vScribe session of three WhatsApp voice notes, with timestamps beside every transcribed line" loading="lazy">
+        <img class="shot dark-only" src="/assets/img/hero-app-dark.webp" width="2240" height="1400" alt="A vScribe session of three WhatsApp voice notes, with timestamps beside every transcribed line" loading="lazy">
+      </figure>
+    </section>
+
+    <ul class="uses" aria-label="Works with">
+      <li><svg class="icon"><use href="/assets/icons.svg#whatsapp"/></svg>WhatsApp<span class="long"> voice notes</span></li>
+      <li><svg class="icon"><use href="/assets/icons.svg#telegram"/></svg>Telegram<span class="long"> messages</span></li>
+      <li><svg class="icon"><use href="/assets/icons.svg#device-mobile"/></svg>Phone<span class="long"> recordings</span></li>
+      <li><svg class="icon"><use href="/assets/icons.svg#microphone-stage"/></svg>Interviews</li>
+      <li><svg class="icon"><use href="/assets/icons.svg#graduation-cap"/></svg>Lectures</li>
+    </ul>
+
+    <div id="features">
+      <section class="feature">
+        <div class="copy">
+          <h2>Drop in anything.</h2>
+          <p>Pick files, drag them onto the window, or convert a whole folder at once. Every batch becomes a session you can rename, search and add to later.</p>
+          <ul class="chips mono" aria-label="Supported formats"><li>.opus</li><li>.ogg</li><li>.m4a</li><li>.mp3</li><li>.wav</li><li>.amr</li><li>.aac</li><li>.webm</li></ul>
+        </div>
+        <div class="block b1">
+          <img class="shot light-only" src="/assets/img/staged-light.webp" width="1560" height="1072" alt="Three voice notes waiting to be sent for transcription" loading="lazy">
+          <img class="shot dark-only" src="/assets/img/staged-dark.webp" width="1560" height="1072" alt="Three voice notes waiting to be sent for transcription" loading="lazy">
+        </div>
+      </section>
+
+      <section class="feature">
+        <div class="copy">
+          <h2>Click a line. Hear it.</h2>
+          <p>Every line gets a timestamp. Click one to jump to that exact moment, then copy the text with or without times, or save it as a file.</p>
+        </div>
+        <div class="block b2">
+          <img class="shot light-only" src="/assets/img/listen-light.webp" width="1560" height="1072" alt="A transcript line highlighted while its audio plays" loading="lazy">
+          <img class="shot dark-only" src="/assets/img/listen-dark.webp" width="1560" height="1072" alt="A transcript line highlighted while its audio plays" loading="lazy">
+        </div>
+      </section>
+
+      <section class="feature">
+        <div class="copy">
+          <h2>Or just talk.</h2>
+          <p>Press the mic to record a new note. Pause, resume and preview it, then send it to be transcribed like any other file.</p>
+        </div>
+        <div class="block b3">
+          <img class="shot light-only" src="/assets/img/recording-light.webp" width="1560" height="1072" alt="Recording a new voice note in vScribe" loading="lazy">
+          <img class="shot dark-only" src="/assets/img/recording-dark.webp" width="1560" height="1072" alt="Recording a new voice note in vScribe" loading="lazy">
+        </div>
+      </section>
+
+      <section class="feature" id="languages">
+        <div class="copy">
+          <h2>Speaks your language.</h2>
+          <p>English by default, or pick one of 15 others, or let vScribe detect it. Accented English is handled well, even with the Fast model.</p>
+          <ul class="chips" aria-label="Some of the supported languages"><li>Yoruba</li><li>Hausa</li><li>Swahili</li><li>Arabic</li><li>French</li><li>Spanish</li><li>Portuguese</li><li>Hindi</li><li>Chinese</li><li>+6 more</li></ul>
+        </div>
+        <div class="block b4">
+          <img class="shot light-only" src="/assets/img/languages-light.webp" width="1560" height="1072" alt="The language picker open, with English selected" loading="lazy">
+          <img class="shot dark-only" src="/assets/img/languages-dark.webp" width="1560" height="1072" alt="The language picker open, with English selected" loading="lazy">
+        </div>
+      </section>
+
+      <section class="feature">
+        <div class="copy">
+          <h2>Fast or Accurate. Your call.</h2>
+          <p>Fast suits most voice notes. Accurate is better with heavy accents and background noise. You can also add your own models from Hugging Face.</p>
+        </div>
+        <div class="block b5">
+          <img class="shot light-only" src="/assets/img/settings-models-light.webp" width="1560" height="1072" alt="Settings showing the built-in Fast and Accurate models" loading="lazy">
+          <img class="shot dark-only" src="/assets/img/settings-models-dark.webp" width="1560" height="1072" alt="Settings showing the built-in Fast and Accurate models" loading="lazy">
+        </div>
+      </section>
+    </div>
+
+    <section class="privacy" id="privacy">
+      <header>
+        <h2>Nothing leaves<br>your computer.</h2>
+        <p>Other apps send your recordings to a server. vScribe runs OpenAI's open Whisper models on your own machine, so your conversations stay yours.</p>
+      </header>
+      <ul class="points">
+        <li><span class="badge"><svg class="icon"><use href="/assets/icons.svg#cloud-slash"/></svg></span><h3>No uploads, no account</h3>Audio and transcripts are processed and stored on this computer. There is nothing to sign up for.</li>
+        <li><span class="badge"><svg class="icon"><use href="/assets/icons.svg#wifi-slash"/></svg></span><h3>Works offline</h3>After a one-time model download of about 480 MB, it transcribes with no internet at all.</li>
+        <li><span class="badge"><svg class="icon"><use href="/assets/icons.svg#files"/></svg></span><h3>Your files stay put</h3>Originals are never changed or moved. Delete a session and its copies go with it.</li>
+      </ul>
+    </section>
+
+    <section class="downloads" id="download">
+      <div class="section-head">
+        <h2>Free for every computer.</h2>
+        <p>A small download. The first time you transcribe, vScribe fetches its speech model once.</p>
+      </div>
+      <div class="platforms">
+        <article class="card">
+          <div class="card-head">
+            <span class="os"><svg class="icon"><use href="/assets/icons.svg#windows"/></svg></span>
+            <div><h3>Windows</h3><p>Windows 10 and 11</p></div>
+          </div>
+          <a class="btn btn-primary btn-block" href="https://github.com/Invalid8/vscribe/releases/latest/download/vScribe-windows-x64-setup.exe"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg>Download installer</a>
+          <p>If Windows says it protected your PC, choose More info, then Run anyway. The app isn't code-signed yet.</p>
+        </article>
+        <article class="card">
+          <div class="card-head">
+            <span class="os"><svg class="icon"><use href="/assets/icons.svg#apple"/></svg></span>
+            <div><h3>macOS</h3><p>macOS 11 or later</p></div>
+          </div>
+          <div class="stack">
+            <a class="btn btn-primary btn-block" href="https://github.com/Invalid8/vscribe/releases/latest/download/vScribe-macos-arm64.dmg"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg>Apple silicon (M1 and later)</a>
+            <a class="btn btn-raised btn-block" href="https://github.com/Invalid8/vscribe/releases/latest/download/vScribe-macos-x64.dmg"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg>Intel Mac</a>
+          </div>
+          <p>Not sure which? Apple menu → About This Mac → Chip. First launch: System Settings → Privacy &amp; Security → Open Anyway.</p>
+        </article>
+        <article class="card">
+          <div class="card-head">
+            <span class="os"><svg class="icon"><use href="/assets/icons.svg#linux"/></svg></span>
+            <div><h3>Linux</h3><p>64-bit · .deb or AppImage</p></div>
+          </div>
+          <div class="stack">
+            <a class="btn btn-primary btn-block" href="https://github.com/Invalid8/vscribe/releases/latest/download/vScribe-linux-amd64.deb"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg>Download .deb</a>
+            <a class="btn btn-raised btn-block" href="https://github.com/Invalid8/vscribe/releases/latest/download/vScribe-linux-amd64.AppImage"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg>AppImage · any distro</a>
+          </div>
+          <p>The .deb suits Ubuntu, Debian, Mint and Pop!_OS. The AppImage runs on any distro: make it executable and open it.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="faq" id="faq">
+      <header>
+        <h2>Questions, answered.</h2>
+        <p>Something else? Use About → Report an issue in the app, or <a class="link" href="https://github.com/Invalid8/vscribe/issues">open an issue on GitHub</a>.</p>
+      </header>
+      <div>
+        <details open><summary>Is it really free?<svg class="icon"><use href="/assets/icons.svg#plus"/></svg></summary><p>Yes. vScribe is free and open source under the MIT licence. No trial, no account, no ads.</p></details>
+        <details><summary>Does it upload my audio?<svg class="icon"><use href="/assets/icons.svg#plus"/></svg></summary><p>Never. Transcription runs entirely on your computer, and your recordings and transcripts are stored there too.</p></details>
+        <details><summary>Why does it download 480 MB the first time?<svg class="icon"><use href="/assets/icons.svg#plus"/></svg></summary><p>That's the speech model that does the transcribing. It's downloaded once and then works offline. The optional Accurate model is about 1.6 GB.</p></details>
+        <details><summary>Which languages does it understand?<svg class="icon"><use href="/assets/icons.svg#plus"/></svg></summary><p>English by default, plus French, Spanish, Portuguese, German, Italian, Dutch, Arabic, Swahili, Yoruba, Hausa, Hindi, Russian, Turkish, Chinese and Japanese, or Auto-detect.</p></details>
+        <details><summary>Which files can I add?<svg class="icon"><use href="/assets/icons.svg#plus"/></svg></summary><p>Voice notes and recordings in .opus, .ogg, .m4a, .mp3, .wav, .amr, .aac and .webm, including WhatsApp and Telegram voice notes.</p></details>
+      </div>
+    </section>
+
+    <section class="closing">
+      <div class="glass">
+        <h2>Your voice notes, finally searchable.</h2>
+        <a class="btn btn-primary btn-lg" x-show="!$store.device.phone" :href="$store.release.url($store.device.platform.file)" href="/download/">
+          <svg class="icon"><use :href="'/assets/icons.svg#' + $store.device.platform.icon" href="/assets/icons.svg#download-simple"/></svg>
+          <span x-text="'Download for ' + $store.device.platform.name">Download vScribe</span>
+        </a>
+        <button class="btn btn-primary btn-lg" type="button" x-show="$store.device.phone" x-cloak x-data="share" @click="send()">
+          <svg class="icon"><use href="/assets/icons.svg#desktop-tower"/></svg>Send to my computer
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-row">
+      <div>
+        <p>Convert audio and voice notes to text, locally. Free and open source.</p>
+        <small>© 2026 vScribe contributors · MIT licence</small>
+      </div>
+      <nav aria-label="Footer">
+        <ul><li>Product</li><li><a href="/#features">Features</a></li><li><a href="/#languages">Languages</a></li><li><a href="/#privacy">Privacy</a></li><li><a href="/download/">Download</a></li></ul>
+        <ul><li>Project</li><li><a href="https://github.com/Invalid8/vscribe">GitHub</a></li><li><a href="https://github.com/Invalid8/vscribe/blob/main/CHANGELOG.md">Changelog</a></li><li><a href="https://github.com/Invalid8/vscribe/issues">Report an issue</a></li><li><a href="https://github.com/Invalid8/vscribe/blob/main/THIRD_PARTY_NOTICES.md">Licences</a></li></ul>
+      </nav>
+    </div>
+    <p class="wordmark" aria-hidden="true">vScribe</p>
+  </footer>
+</body>
+</html>
