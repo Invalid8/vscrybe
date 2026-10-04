@@ -15,6 +15,8 @@ First public release, now also for Windows and macOS.
 - Windows and macOS builds, for both Apple silicon and Intel Macs, and an AppImage for any Linux distribution.
 
 ### Changed
+- vScribe is now VScrybe. Notes, settings and downloaded models move to the new name's folders the first
+  time it starts.
 - Audio is decoded by FFmpeg built into VScrybe, so nothing has to be installed on any system. It is also more
   accurate than the GStreamer pipeline it replaces (stereo was mixed down about 3 dB too quiet).
 - Only one model is kept in memory at a time, and uploads are written to disk instead of held in memory.
@@ -28,6 +30,8 @@ First public release, now also for Windows and macOS.
 - Download progress stayed at 0% until a model finished, and a second download waited behind the first.
 - Gated Hugging Face models failed with "check your internet connection"; they are now marked and refused.
 - Dialogs covered the window controls, and clicking a "Transcription finished" notification didn't open the app.
+- Quitting while a note was being transcribed could crash the app. It now stops cleanly, and the note picks up
+  again the next time VScrybe starts.
 
 ## [0.2.0] - 2026-10-01
 
