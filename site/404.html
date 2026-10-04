@@ -5,15 +5,64 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Page not found · VScrybe</title>
   <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#ecebea">
   <link rel="icon" href="/assets/img/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
   <link rel="stylesheet" href="/assets/site.css">
   <script>try { document.documentElement.dataset.theme = localStorage.getItem("theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); } catch {}</script>
+  <script defer src="/assets/site.js"></script>
+  <script defer src="/assets/alpine.min.js"></script>
 </head>
-<body>
-  <main class="page-head">
-    <h1>This page wandered off.</h1>
-    <p class="muted">The link may be old. Everything VScrybe has is one click away.</p>
-    <a class="btn btn-primary btn-lg" href="/">Go to VScrybe</a>
+<body x-data>
+  <header class="nav" x-data="{ open: false, stuck: scrollY > 8 }" @scroll.window="stuck = scrollY > 8" :class="stuck && 'stuck'">
+    <a class="brand" href="/"><img src="/assets/img/icon.svg" alt="">VScrybe</a>
+    <nav class="nav-links" :class="open && 'open'" @click="open = false">
+      <a href="/#features">Features</a>
+      <a href="/#languages">Languages</a>
+      <a href="/#privacy">Privacy</a>
+      <a href="/#faq">FAQ</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="btn btn-raised btn-round" type="button" @click="$store.theme.toggle()" :aria-label="$store.theme.dark ? 'Use light theme' : 'Use dark theme'" aria-label="Switch theme">
+        <svg class="icon"><use :href="$store.theme.dark ? '/assets/icons.svg#sun' : '/assets/icons.svg#moon'" href="/assets/icons.svg#moon"/></svg>
+      </button>
+      <a class="btn btn-raised stars" href="https://github.com/Invalid8/vscrybe" aria-label="VScrybe on GitHub">
+        <svg class="icon"><use href="/assets/icons.svg#star"/></svg>
+        <span x-text="$store.release.stars" x-show="$store.release.stars" x-cloak></span>
+        <svg class="icon"><use href="/assets/icons.svg#github"/></svg>
+      </a>
+      <a class="btn btn-primary" href="/download/">Download</a>
+      <button class="btn btn-raised btn-round menu" type="button" @click="open = !open" :aria-expanded="open" aria-label="Menu">
+        <svg class="icon"><use :href="open ? '/assets/icons.svg#x' : '/assets/icons.svg#list'" href="/assets/icons.svg#list"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="closing lost">
+      <div class="glass">
+        <h1>This page wandered off.</h1>
+        <p class="muted">The link may be old or mistyped. Everything VScrybe has is one click away.</p>
+        <div class="choices">
+          <a class="btn btn-primary btn-lg" href="/">Go to the home page</a>
+          <a class="btn btn-raised btn-lg" href="/download/"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg>Download</a>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <footer class="footer">
+    <div class="footer-row">
+      <div>
+        <p>Convert audio and voice notes to text, locally. Free and open source.</p>
+        <small>© 2026 VScrybe contributors · MIT licence</small>
+      </div>
+      <nav aria-label="Footer">
+        <ul><li>Product</li><li><a href="/#features">Features</a></li><li><a href="/#languages">Languages</a></li><li><a href="/#privacy">Privacy</a></li><li><a href="/download/">Download</a></li></ul>
+        <ul><li>Project</li><li><a href="https://github.com/Invalid8/vscrybe">GitHub</a></li><li><a href="https://github.com/Invalid8/vscrybe/blob/main/CHANGELOG.md">Changelog</a></li><li><a href="https://github.com/Invalid8/vscrybe/issues">Report an issue</a></li><li><a href="https://github.com/Invalid8/vscrybe/blob/main/THIRD_PARTY_NOTICES.md">Licences</a></li></ul>
+      </nav>
+    </div>
+    <p class="wordmark" aria-hidden="true">VScrybe</p>
+  </footer>
 </body>
 </html>

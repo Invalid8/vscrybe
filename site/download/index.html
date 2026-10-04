@@ -24,7 +24,7 @@
   <script defer src="/assets/alpine.min.js"></script>
 </head>
 <body x-data>
-  <header class="nav" x-data="{ open: false }">
+  <header class="nav" x-data="{ open: false, stuck: scrollY > 8 }" @scroll.window="stuck = scrollY > 8" :class="stuck && 'stuck'">
     <a class="brand" href="/"><img src="/assets/img/icon.svg" alt="">VScrybe</a>
     <nav class="nav-links" :class="open && 'open'" @click="open = false">
       <a href="/#features">Features</a>
