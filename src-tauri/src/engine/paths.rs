@@ -1,15 +1,15 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const APP: &str = "vscribe";
-const OLD_APP: &str = "vn-transcribe";
+use crate::ID as APP;
+
+const OLD_APPS: [&str; 2] = ["vscribe", "vn-transcribe"];
 
 fn moved(base: Option<PathBuf>) -> PathBuf {
     let base = base.expect("a home directory");
     let current = base.join(APP);
-    let old = base.join(OLD_APP);
     if !current.exists()
-        && old.is_dir()
+        && let Some(old) = OLD_APPS.iter().map(|name| base.join(name)).find(|old| old.is_dir())
         && let Err(error) = fs::rename(&old, &current)
     {
         log::warn!("Couldn't move {} to {}: {error}", old.display(), current.display());
@@ -27,6 +27,10 @@ pub fn cache_dir() -> PathBuf {
 
 pub fn log_dir() -> PathBuf {
     dirs::state_dir().or_else(dirs::cache_dir).expect("a state directory").join(APP).join("log")
+}
+
+pub fn log_file() -> PathBuf {
+    log_dir().join(format!("{APP}.log"))
 }
 
 pub fn tilde(path: &Path) -> String {

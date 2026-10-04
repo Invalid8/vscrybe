@@ -399,7 +399,7 @@ impl Store {
             }
             let result = attempt.unwrap_or_else(|_| {
                 loaded = None;
-                Err("vScribe hit an internal error on this file. Try another model, or report it from About.".into())
+                Err(format!("{} hit an internal error on this file. Try another model, or report it from About.", crate::NAME))
             });
             let mut state = self.lock();
             state.batch_done += 1;

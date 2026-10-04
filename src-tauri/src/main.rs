@@ -5,8 +5,8 @@ fn main() -> std::process::ExitCode {
         let _ = std::env::set_current_dir(dir);
     }
     if std::env::args_os().len() > 1 {
-        return vscribe_lib::cli::main();
+        return vscrybe_lib::cli::main();
     }
-    vscribe_lib::run();
+    vscrybe_lib::run();
     std::process::ExitCode::SUCCESS
 }

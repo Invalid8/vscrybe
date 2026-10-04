@@ -1,5 +1,5 @@
 {
-  "name": "vscribe",
+  "name": "vscrybe",
   "private": true,
   "scripts": {
     "tauri": "tauri"

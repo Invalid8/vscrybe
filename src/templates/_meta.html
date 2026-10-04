@@ -1,12 +1,12 @@
 {% if current %}
   {% set notes = store.notes(current.id) %}
   {% set first = notes|selectattr("transcript")|first %}
-  {% set page_title = (current.title or store.title(current)|truncate(60)) ~ " · vScribe" %}
+  {% set page_title = (current.title or store.title(current)|truncate(60)) ~ " · " ~ app_name %}
   {% set page_description = notes|length ~ " voice note" ~ ("s" if notes|length != 1 else "") ~ " transcribed on this computer"
        ~ (": " ~ first.result.text|truncate(140) if first and first.result.text else ".") %}
   {% set page_path = "/?s=" ~ current.id %}
 {% else %}
-  {% set page_title = "New session · vScribe" if partial else "vScribe · Convert audio and voice notes to text" %}
+  {% set page_title = ("New session · " ~ app_name) if partial else (app_name ~ " · Convert audio and voice notes to text") %}
   {% set page_description = "Convert audio and voice notes to text on your own computer. Nothing is uploaded anywhere." %}
   {% set page_path = "/" %}
 {% endif %}

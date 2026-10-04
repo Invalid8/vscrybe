@@ -5,14 +5,14 @@ function app() {
     compact: false,
     atBottom: true,
     query: "",
-    model: stored("vscribe-model", "small"),
-    language: stored("vscribe-language", "en"),
-    railOpen: stored("vscribe-rail", "open") === "open",
-    theme: stored("vscribe-theme", "system"),
+    model: stored("model", "small"),
+    language: stored("language", "en"),
+    railOpen: stored("rail", "open") === "open",
+    theme: stored("theme", "system"),
     drawer: false,
     toasts: [],
     consent: null,
-    onboarding: stored("vscribe-onboarded", "") ? null : 0,
+    onboarding: stored("onboarded", "") ? null : 0,
     desktop: !!window.__TAURI__,
     busy: null,
     staged: [],
@@ -20,11 +20,11 @@ function app() {
     preview: null,
 
     init() {
-      this.$watch("model", (value) => store("vscribe-model", value));
-      this.$watch("language", (value) => store("vscribe-language", value));
-      this.$watch("railOpen", (value) => store("vscribe-rail", value ? "open" : "closed"));
+      this.$watch("model", (value) => store("model", value));
+      this.$watch("language", (value) => store("language", value));
+      this.$watch("railOpen", (value) => store("rail", value ? "open" : "closed"));
       this.$watch("theme", (value) => {
-        store("vscribe-theme", value);
+        store("theme", value);
         applyTheme(value);
       });
       document.body.addEventListener("htmx:responseError", (event) => this.notify(errorMessage(event.detail.xhr), "error"));
@@ -50,8 +50,8 @@ function app() {
       trayStore("readonly", (store) => store.getAll())
         .then((items) => (this.staged = [...items.sort((a, b) => a.id - b.id), ...this.staged]))
         .catch((error) => console.warn("Couldn't restore staged files", error));
-      window.addEventListener("vscribe-stage", (event) => this.stage([event.detail.file], event.detail.seconds));
-      window.addEventListener("vscribe-notify", (event) => this.notify(event.detail.message, event.detail.kind, event.detail.action));
+      window.addEventListener("stage", (event) => this.stage([event.detail.file], event.detail.seconds));
+      window.addEventListener("notify", (event) => this.notify(event.detail.message, event.detail.kind, event.detail.action));
       this.watchUploads();
       if (this.desktop) {
         document.addEventListener("contextmenu", (event) => {
@@ -143,13 +143,13 @@ function app() {
 
     closeConsent(granted) {
       if (!this.consent) return;
-      if (granted) store(`vscribe-consent-${this.consent.kind}`, "granted");
+      if (granted) store(`consent-${this.consent.kind}`, "granted");
       this.consent.resolve(granted);
       this.consent = null;
     },
 
     finishOnboarding() {
-      store("vscribe-onboarded", "yes");
+      store("onboarded", "yes");
       this.$refs.onboarding.close();
     },
 
@@ -228,12 +228,12 @@ function app() {
   };
 }
 
-const UNREACHABLE = "Can't reach the transcription engine. Restart vScribe and try again.";
+const UNREACHABLE = `Can't reach the transcription engine. Restart ${VN.name} and try again.`;
 
 const CONSENT = {
   mic: {
     title: "Use your microphone?",
-    body: "vScribe can record audio straight from your microphone.",
+    body: `${VN.name} can record audio straight from your microphone.`,
     points: [
       "It only listens while the red recording dot is showing.",
       "Recordings are saved and transcribed on this computer. Nothing is uploaded.",
@@ -243,7 +243,7 @@ const CONSENT = {
   },
   files: {
     title: "Add files from your computer?",
-    body: "vScribe keeps its own copy of the audio you pick or drop, so it can play and transcribe it.",
+    body: `${VN.name} keeps its own copy of the audio you pick or drop, so it can play and transcribe it.`,
     points: [
       "Your original files are never changed or moved.",
       `Copies are kept in the app's private folder (${window.VN?.dataDir ?? "your data folder"}).`,
@@ -254,7 +254,7 @@ const CONSENT = {
 };
 
 function askConsent(kind) {
-  if (stored(`vscribe-consent-${kind}`, "") === "granted") return Promise.resolve(true);
+  if (stored(`consent-${kind}`, "") === "granted") return Promise.resolve(true);
   return new Promise((resolve) => window.dispatchEvent(new CustomEvent("consent-request", { detail: { kind, resolve } })));
 }
 
@@ -275,10 +275,10 @@ function reportLink(email, version) {
     "File type (if it's about a recording):",
     "",
     "---",
-    `vScribe ${version}`,
+    `${VN.name} ${version}`,
     navigator.userAgent,
   ].join("\n");
-  return `mailto:${email}?subject=${encodeURIComponent(`vScribe issue (${version})`)}&body=${encodeURIComponent(body)}`;
+  return `mailto:${email}?subject=${encodeURIComponent(`${VN.name} issue (${version})`)}&body=${encodeURIComponent(body)}`;
 }
 
 function micError(error) {
@@ -355,7 +355,7 @@ function recorder() {
         return;
       }
       const file = new File([wav], recordingName("wav"), { type: "audio/wav" });
-      window.dispatchEvent(new CustomEvent("vscribe-stage", { detail: { file, seconds: this.seconds } }));
+      window.dispatchEvent(new CustomEvent("stage", { detail: { file, seconds: this.seconds } }));
     },
 
     cancel() {
@@ -450,7 +450,7 @@ function encodeWav(chunks, rate) {
 
 function stored(key, fallback) {
   try {
-    return localStorage.getItem(key) || fallback;
+    return localStorage.getItem(`${VN.id}-${key}`) || fallback;
   } catch {
     return fallback;
   }
@@ -458,7 +458,7 @@ function stored(key, fallback) {
 
 function store(key, value) {
   try {
-    localStorage.setItem(key, value);
+    localStorage.setItem(`${VN.id}-${key}`, value);
   } catch {}
 }
 
@@ -466,7 +466,7 @@ let trayDatabase;
 
 function trayStore(mode, action) {
   trayDatabase ??= new Promise((resolve, reject) => {
-    const request = indexedDB.open("vscribe", 1);
+    const request = indexedDB.open(VN.id, 1);
     request.onupgradeneeded = () => request.result.createObjectStore("staged", { keyPath: "id" });
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
@@ -507,7 +507,7 @@ function toast(message, kind = "error") {
 
 window.downloaded = (path, name) => {
   const action = { label: "Show in folder", run: () => window.__TAURI__.opener.revealItemInDir(path) };
-  window.dispatchEvent(new CustomEvent("vscribe-notify", { detail: { message: `Saved ${name} to Downloads`, kind: "success", action } }));
+  window.dispatchEvent(new CustomEvent("notify", { detail: { message: `Saved ${name} to Downloads`, kind: "success", action } }));
 };
 
 function picker(options, value) {

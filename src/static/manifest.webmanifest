@@ -1,6 +1,6 @@
 {
-  "name": "vScribe",
-  "short_name": "vScribe",
+  "name": "VScrybe",
+  "short_name": "VScrybe",
   "description": "Convert audio and voice notes to text on your own computer.",
   "start_url": "/",
   "scope": "/",

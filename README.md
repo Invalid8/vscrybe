@@ -1,6 +1,6 @@
-# vScribe
+# VScrybe
 
-[![CI](https://github.com/Invalid8/vscribe/actions/workflows/ci.yml/badge.svg)](https://github.com/Invalid8/vscribe/actions/workflows/ci.yml)
+[![CI](https://github.com/Invalid8/vscrybe/actions/workflows/ci.yml/badge.svg)](https://github.com/Invalid8/vscrybe/actions/workflows/ci.yml)
 
 Convert audio and voice notes to text you can copy, search and export, without uploading them anywhere. Transcription runs on your own computer with OpenAI's open Whisper models.
 
@@ -20,62 +20,62 @@ Convert audio and voice notes to text you can copy, search and export, without u
 - **Your language.** English by default; pick another language next to the model when your notes aren't in English.
 - **Two models.** *Fast* (Whisper small) suits most voice notes; *Accurate* (large-v3-turbo) is better with heavy
   accents and noise.
-- **Command line too.** `vscribe transcribe` writes a `.txt` next to every voice note in a folder.
+- **Command line too.** `vscrybe transcribe` writes a `.txt` next to every voice note in a folder.
 
 ## Install
 
 ### Linux (Ubuntu, Debian, Mint, Pop!_OS)
 
-Download the latest `vScribe-linux-amd64.deb` from
-[Releases](https://github.com/Invalid8/vscribe/releases), then:
+Download the latest `VScrybe-linux-amd64.deb` from
+[Releases](https://github.com/Invalid8/vscrybe/releases), then:
 
 ```sh
-sudo apt install ./vScribe-linux-amd64.deb
+sudo apt install ./VScrybe-linux-amd64.deb
 ```
 
-Open **vScribe** from your app menu. The first time you transcribe, it downloads the Fast model (about 480 MB).
+Open **VScrybe** from your app menu. The first time you transcribe, it downloads the Fast model (about 480 MB).
 
-Uninstall with `sudo apt remove vscribe`. Your sessions stay in `~/.local/share/vscribe` until you delete
+Uninstall with `sudo apt remove vscrybe`. Your sessions stay in `~/.local/share/vscrybe` until you delete
 that folder.
 
 ### Any other Linux (AppImage)
 
-Download `vScribe-linux-amd64.AppImage` from [Releases](https://github.com/Invalid8/vscribe/releases), then:
+Download `VScrybe-linux-amd64.AppImage` from [Releases](https://github.com/Invalid8/vscrybe/releases), then:
 
 ```sh
-chmod +x vScribe-linux-amd64.AppImage
-./vScribe-linux-amd64.AppImage
+chmod +x VScrybe-linux-amd64.AppImage
+./VScrybe-linux-amd64.AppImage
 ```
 
 ### Windows 10 and 11
 
-Download `vScribe-windows-x64-setup.exe` from [Releases](https://github.com/Invalid8/vscribe/releases) and run it.
+Download `VScrybe-windows-x64-setup.exe` from [Releases](https://github.com/Invalid8/vscrybe/releases) and run it.
 The installer isn't code-signed yet, so Windows may show "Windows protected your PC": choose **More info → Run
 anyway**. Uninstall from **Settings → Apps**.
 
 ### macOS 11 or later
 
-Download the `.dmg` for your Mac from [Releases](https://github.com/Invalid8/vscribe/releases):
+Download the `.dmg` for your Mac from [Releases](https://github.com/Invalid8/vscrybe/releases):
 
-- `vScribe-macos-arm64.dmg` for Apple silicon (M1 and later)
-- `vScribe-macos-x64.dmg` for Intel Macs
+- `VScrybe-macos-arm64.dmg` for Apple silicon (M1 and later)
+- `VScrybe-macos-x64.dmg` for Intel Macs
 
-Open it and drag **vScribe** into Applications. The app isn't notarized by Apple yet, so the first launch is
-blocked: open **System Settings → Privacy & Security**, scroll down and click **Open Anyway** next to vScribe.
+Open it and drag **VScrybe** into Applications. The app isn't notarized by Apple yet, so the first launch is
+blocked: open **System Settings → Privacy & Security**, scroll down and click **Open Anyway** next to VScrybe.
 
 To build from source, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Command line
 
-The `.deb` installs a `vscribe` command. On macOS it is `/Applications/vScribe.app/Contents/MacOS/vscribe`, and on
-Windows `vscribe.exe` in vScribe's install folder.
+The `.deb` installs a `vscrybe` command. On macOS it is `/Applications/VScrybe.app/Contents/MacOS/vscrybe`, and on
+Windows `vscrybe.exe` in VScrybe's install folder.
 
 ```sh
-vscribe transcribe ~/Recordings/                     # writes a .txt next to each voice note
-vscribe transcribe note.opus --stdout                    # print instead of writing a file
-vscribe transcribe note.opus -t                          # [m:ss] timestamps on every line
-vscribe transcribe interview.m4a -m large-v3-turbo       # the Accurate model
-vscribe transcribe note.opus -l fr                       # a language other than English
+vscrybe transcribe ~/Recordings/                     # writes a .txt next to each voice note
+vscrybe transcribe note.opus --stdout                    # print instead of writing a file
+vscrybe transcribe note.opus -t                          # [m:ss] timestamps on every line
+vscrybe transcribe interview.m4a -m large-v3-turbo       # the Accurate model
+vscrybe transcribe note.opus -l fr                       # a language other than English
 ```
 
 Files that already have a `.txt` are skipped unless you pass `--force`.
@@ -84,21 +84,21 @@ Files that already have a `.txt` are skipped unless you pass `--force`.
 
 | What | Linux | macOS | Windows |
 | --- | --- | --- | --- |
-| Sessions, audio copies, transcripts | `~/.local/share/vscribe` | `~/Library/Application Support/vscribe` | `%APPDATA%\vscribe` |
-| Downloaded models | `~/.cache/vscribe/models` | `~/Library/Caches/vscribe/models` | `%LOCALAPPDATA%\vscribe\models` |
-| Log file | `~/.local/state/vscribe/log/vscribe.log` | `~/Library/Caches/vscribe/log/vscribe.log` | `%LOCALAPPDATA%\vscribe\log\vscribe.log` |
+| Sessions, audio copies, transcripts | `~/.local/share/vscrybe` | `~/Library/Application Support/vscrybe` | `%APPDATA%\vscrybe` |
+| Downloaded models | `~/.cache/vscrybe/models` | `~/Library/Caches/vscrybe/models` | `%LOCALAPPDATA%\vscrybe\models` |
+| Log file | `~/.local/state/vscrybe/log/vscrybe.log` | `~/Library/Caches/vscrybe/log/vscrybe.log` | `%LOCALAPPDATA%\vscrybe\log\vscrybe.log` |
 
 Your original files are never changed or moved. Deleting a session deletes its copies.
 
 ## How it works
 
-vScribe is a single Rust program built with [Tauri](https://tauri.app). It runs a small web server on a
+VScrybe is a single Rust program built with [Tauri](https://tauri.app). It runs a small web server on a
 private local port (axum + MiniJinja templates, with an htmx + Alpine.js interface) and shows it in a native window.
 Audio is decoded with FFmpeg built into the app and transcribed with
 [CTranslate2](https://github.com/OpenNMT/CTranslate2), the same engine faster-whisper uses. Nothing listens on the
 network.
 
-<img alt="The welcome screen of vScribe" src="docs/screenshots/welcome.png" width="640">
+<img alt="The welcome screen of VScrybe" src="docs/screenshots/welcome.png" width="640">
 
 ## Contributing
 
@@ -107,5 +107,5 @@ the desktop app. Found a problem but don't use GitHub? Use **About → Report an
 
 ## License
 
-[MIT](LICENSE). vScribe bundles and downloads third-party software and models under their own licenses; see
+[MIT](LICENSE). VScrybe bundles and downloads third-party software and models under their own licenses; see
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

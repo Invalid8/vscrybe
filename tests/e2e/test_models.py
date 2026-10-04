@@ -6,7 +6,7 @@ from playwright.sync_api import Page, expect
 from .conftest import CLIPBOARD_SPY, RETURNING_USER
 from .test_sessions import TRANSCRIBED, add, expect_toast
 
-SMALL = Path.home() / ".cache" / "vscribe" / "models" / "small"
+SMALL = Path.home() / ".cache" / "vscrybe" / "models" / "small"
 
 
 def open_models(page: Page):
@@ -95,7 +95,7 @@ def test_folders_are_left_to_the_desktop_app_in_a_browser(returning_user: Page):
     open_models(page)
     page.get_by_role("tab", name="This computer").click()
 
-    expect(page.get_by_text("Folders are added in the vScribe desktop app")).to_be_visible()
+    expect(page.get_by_text("Folders are added in the VScrybe desktop app")).to_be_visible()
     expect(page.get_by_role("button", name="Choose folder…")).to_be_hidden()
     expect(page.get_by_role("button", name="Add model")).to_be_hidden()
 

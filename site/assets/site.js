@@ -1,13 +1,13 @@
-const REPO = "Invalid8/vscribe";
+const REPO = "Invalid8/vscrybe";
 const API = `https://api.github.com/repos/${REPO}`;
 const LATEST = `https://github.com/${REPO}/releases/latest/download`;
 
 const FILES = {
-  windows: "vScribe-windows-x64-setup.exe",
-  macArm: "vScribe-macos-arm64.dmg",
-  macIntel: "vScribe-macos-x64.dmg",
-  deb: "vScribe-linux-amd64.deb",
-  appimage: "vScribe-linux-amd64.AppImage",
+  windows: "VScrybe-windows-x64-setup.exe",
+  macArm: "VScrybe-macos-arm64.dmg",
+  macIntel: "VScrybe-macos-x64.dmg",
+  deb: "VScrybe-linux-amd64.deb",
+  appimage: "VScrybe-linux-amd64.AppImage",
 };
 
 const PLATFORMS = {
@@ -92,7 +92,7 @@ document.addEventListener("alpine:init", () => {
     copied: false,
     send() {
       if (!navigator.share) return this.copy();
-      navigator.share({ title: "vScribe", text: "Voice notes to text, on your computer.", url: location.href }).catch(() => {});
+      navigator.share({ title: "VScrybe", text: "Voice notes to text, on your computer.", url: location.href }).catch(() => {});
     },
     async copy() {
       await navigator.clipboard.writeText(location.href);

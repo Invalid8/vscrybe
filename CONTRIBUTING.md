@@ -10,7 +10,7 @@ src/                  the pages: MiniJinja templates, CSS, htmx/Alpine scripts, 
 src-tauri/            the app (Tauri 2, Rust)
   src/engine/         sessions and queue, FFmpeg decoding, CTranslate2 transcription, model download
   src/web/            axum routes that render the templates and serve audio
-  src/cli.rs          `vscribe transcribe` and `vscribe serve`
+  src/cli.rs          `vscrybe transcribe` and `vscrybe serve`
   src/lib.rs          the window: starts the server in-process and loads it
   linux/              .desktop template for the .deb
 tests/fixtures/       sample audio
@@ -27,7 +27,7 @@ sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev build-essential
 ```
 
 plus [Rust](https://rustup.rs), Node.js 20+ and, for the browser tests, [uv](https://docs.astral.sh/uv/). The GStreamer
-plugins are only for playing audio inside the Linux app; decoding uses FFmpeg built into vScribe.
+plugins are only for playing audio inside the Linux app; decoding uses FFmpeg built into VScrybe.
 
 Build that FFmpeg once (about a minute; `.cargo/config.toml` points cargo at it):
 
@@ -49,13 +49,13 @@ The first transcription downloads the Fast model (about 480 MB) into your cache 
 
 ```sh
 cargo test --manifest-path src-tauri/Cargo.toml          # Rust tests
-cargo build --manifest-path src-tauri/Cargo.toml         # the browser tests use target/debug/vscribe
+cargo build --manifest-path src-tauri/Cargo.toml         # the browser tests use target/debug/vscrybe
 uv run --project tests/e2e playwright install chromium firefox   # once
 uv run --project tests/e2e pytest tests/e2e              # browser tests in both browsers
 uv run --project tests/e2e pytest tests/e2e --browser firefox --headed
 ```
 
-The browser tests start `vscribe serve` with a throwaway data folder, so they never touch your sessions. They do
+The browser tests start `vscrybe serve` with a throwaway data folder, so they never touch your sessions. They do
 use the real Fast model from your cache. Please add or update tests with every change, and check UI changes in Firefox
 as well as Chromium.
 
@@ -63,10 +63,10 @@ as well as Chromium.
 
 ```sh
 npx tauri build
-# Linux   -> src-tauri/target/release/bundle/deb/vscribe_<version>_amd64.deb
-#            src-tauri/target/release/bundle/appimage/vscribe_<version>_amd64.AppImage
-# Windows -> src-tauri/target/release/bundle/nsis/vScribe_<version>_x64-setup.exe
-# macOS   -> src-tauri/target/release/bundle/dmg/vScribe_<version>_<arch>.dmg
+# Linux   -> src-tauri/target/release/bundle/deb/vscrybe_<version>_amd64.deb
+#            src-tauri/target/release/bundle/appimage/vscrybe_<version>_amd64.AppImage
+# Windows -> src-tauri/target/release/bundle/nsis/VScrybe_<version>_x64-setup.exe
+# macOS   -> src-tauri/target/release/bundle/dmg/VScrybe_<version>_<arch>.dmg
 ```
 
 On Windows, build FFmpeg from an MSYS2 shell that inherits an MSVC developer environment (see

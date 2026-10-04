@@ -15,15 +15,17 @@ use tauri::{AppHandle, Manager, RunEvent, Url, WebviewUrl, WebviewWindowBuilder}
 
 use engine::store::{Batch, Store};
 
+pub const NAME: &str = "VScrybe";
+pub const ID: &str = env!("CARGO_PKG_NAME");
+
 pub fn setup_logging() {
-    let dir = engine::paths::log_dir();
-    let file = dir.join("vscribe.log");
-    let _ = fs::create_dir_all(&dir);
+    let file = engine::paths::log_file();
+    let _ = fs::create_dir_all(engine::paths::log_dir());
     if fs::metadata(&file).is_ok_and(|m| m.len() > 1_000_000) {
-        let _ = fs::rename(&file, dir.join("vscribe.log.1"));
+        let _ = fs::rename(&file, file.with_extension("log.1"));
     }
     let config = ConfigBuilder::new()
-        .add_filter_allow_str("vscribe")
+        .add_filter_allow_str(ID)
         .build();
     let mut loggers: Vec<Box<dyn simplelog::SharedLogger>> =
         vec![TermLogger::new(LevelFilter::Warn, config.clone(), TerminalMode::Stderr, ColorChoice::Auto)];
@@ -131,12 +133,12 @@ static LAST_NOTIFICATION: AtomicU32 = AtomicU32::new(0);
 fn show_notification(app: &AppHandle, title: &str, body: &str) {
     let shown = notify_rust::Notification::new()
         .id(LAST_NOTIFICATION.load(Ordering::Relaxed))
-        .appname("vScribe")
+        .appname(NAME)
         .summary(title)
         .body(body)
-        .icon("vscribe")
-        .hint(notify_rust::Hint::DesktopEntry("vscribe".into()))
-        .action("default", "Open vScribe")
+        .icon(ID)
+        .hint(notify_rust::Hint::DesktopEntry(ID.into()))
+        .action("default", &format!("Open {NAME}"))
         .show();
     match shown {
         Ok(notification) => {
@@ -153,7 +155,7 @@ fn show_notification(app: &AppHandle, title: &str, body: &str) {
 
 #[cfg(not(target_os = "linux"))]
 fn show_notification(_: &AppHandle, title: &str, body: &str) {
-    if let Err(error) = notify_rust::Notification::new().appname("vScribe").summary(title).body(body).show() {
+    if let Err(error) = notify_rust::Notification::new().appname(NAME).summary(title).body(body).show() {
         log::warn!("Couldn't show a notification: {error}");
     }
 }
@@ -192,7 +194,7 @@ pub fn run() {
             };
             let downloads = dirs::download_dir().unwrap_or_else(std::env::temp_dir);
             let mut builder = WebviewWindowBuilder::new(app, "main", url)
-                .title("vScribe")
+                .title(NAME)
                 .inner_size(1280.0, 820.0)
                 .min_inner_size(420.0, 560.0)
                 .decorations(false)
@@ -245,7 +247,7 @@ pub fn run() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("failed to start vScribe")
+        .expect("failed to start the app")
         .run(|app, event| {
             if let (RunEvent::Exit, Some(store)) = (event, app.try_state::<Store>()) {
                 store.shutdown();

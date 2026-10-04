@@ -9,10 +9,10 @@ use crate::engine::models;
 use crate::engine::transcribe::{DEFAULT_LANGUAGE, Engine, LANGUAGES, is_language};
 use crate::web::AUDIO_EXTENSIONS;
 
-const READY: &str = "VSCRIBE_READY";
+const READY: &str = "VSCRYBE_READY";
 
 #[derive(Parser)]
-#[command(name = "vscribe", about = "Convert audio and voice notes to text, locally.", version)]
+#[command(about = "Convert audio and voice notes to text, locally.", version)]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -24,7 +24,7 @@ enum Command {
     Transcribe {
         #[arg(required = true)]
         paths: Vec<PathBuf>,
-        /// small (Fast), large-v3-turbo (Accurate), or a model you added (see `vscribe models`)
+        /// small (Fast), large-v3-turbo (Accurate), or a model you added (see `vscrybe models`)
         #[arg(short, long, default_value = models::DEFAULT)]
         model: String,
         /// Language spoken in the recordings, as a code such as en, fr or yo
@@ -86,7 +86,7 @@ fn manage_models(action: Option<ModelAction>) -> ExitCode {
             let folder = PathBuf::from(&source);
             let adding = if folder.is_dir() { models::Adding::Folder(folder) } else { models::Adding::Repo(source) };
             models::add(adding, &name).map(|model| {
-                println!("Added {} as {}. Use it with: vscribe transcribe -m {} …", model.label, model.name, model.name)
+                println!("Added {} as {}. Use it with: {} transcribe -m {} …", model.label, model.name, crate::ID, model.name)
             })
         }
         ModelAction::Remove { model } => models::remove(&model).map(|()| println!("Removed {model}.")),

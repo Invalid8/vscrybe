@@ -5,14 +5,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {% include "_meta.html" %}
-  <meta name="application-name" content="vScribe">
+  <meta name="application-name" content="{{ app_name }}">
   <meta name="robots" content="noindex, nofollow">
   <meta name="htmx-config" content='{"attributesToSettle": ["style", "width", "height"]}'>
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#ecebea" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="vScribe">
+  <meta property="og:site_name" content="{{ app_name }}">
   <meta property="og:image" content="{{ base_url }}/static/icons/icon-512.png">
   <meta name="twitter:card" content="summary">
   <link rel="icon" href="/static/icons/icon.svg" type="image/svg+xml">
@@ -21,7 +21,7 @@
   <link rel="manifest" href="/static/manifest.webmanifest">
   <script>
     try {
-      const theme = localStorage.getItem("vscribe-theme");
+      const theme = localStorage.getItem("{{ app_id }}-theme");
       if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
     } catch {}
   </script>
@@ -29,7 +29,7 @@
   <link rel="preload" href="/static/fonts/onest-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/static/fonts/bricolage-grotesque-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/static/app.css">
-  <script>window.VN = {{ {"dataDir": data_dir, "logFile": log_file, "version": version}|tojson }};</script>
+  <script>window.VN = {{ {"name": app_name, "id": app_id, "dataDir": data_dir, "logFile": log_file, "version": version}|tojson }};</script>
   <script src="/static/app.js"></script>
   <script src="/static/htmx.min.js" defer></script>
   <script src="/static/alpine.min.js" defer></script>
@@ -44,7 +44,7 @@
       @toast.window="notify($event.detail.message, $event.detail.kind)">
   <script>
     try {
-      if (localStorage.getItem("vscribe-rail") === "closed") document.body.classList.add("rail-closed");
+      if (localStorage.getItem("{{ app_id }}-rail") === "closed") document.body.classList.add("rail-closed");
     } catch {}
   </script>
   {% include "_icons.svg" %}
@@ -62,7 +62,7 @@
     <div class="side-top" data-tauri-drag-region>
       <a class="brand" href="/">
         <span class="brand-mark">{{ icon("audio-lines") }}</span>
-        <span>vScribe</span>
+        <span>{{ app_name }}</span>
       </a>
       <button class="icon-btn" type="button" @click="toggleRail()" title="Close sidebar" aria-label="Close sidebar">
         {{ icon("panel-left-close") }}
@@ -101,7 +101,7 @@
       </button>
       <div class="side-foot-actions">
         <button class="icon-btn" type="button" @click="$dispatch('open-settings', 'models')" title="Settings" aria-label="Settings">{{ icon("settings") }}</button>
-        <button class="icon-btn" type="button" @click="$dispatch('open-settings', 'about')" title="About vScribe" aria-label="About vScribe">{{ icon("info") }}</button>
+        <button class="icon-btn" type="button" @click="$dispatch('open-settings', 'about')" title="About {{ app_name }}" aria-label="About {{ app_name }}">{{ icon("info") }}</button>
       </div>
     </div>
 
@@ -116,7 +116,7 @@
       </button>
       <a class="brand main-brand" href="/">
         <span class="brand-mark">{{ icon("audio-lines") }}</span>
-        <span>vScribe</span>
+        <span>{{ app_name }}</span>
       </a>
       {% include "_bar.html" %}
       {{ window_controls() }}
@@ -295,7 +295,7 @@
           <header class="about-brand">
             <span class="brand-mark">{{ icon("audio-lines") }}</span>
             <div>
-              <h3>vScribe</h3>
+              <h3>{{ app_name }}</h3>
               <p class="about-version">Version {{ version }}</p>
             </div>
           </header>

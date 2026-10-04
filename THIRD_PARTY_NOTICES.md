@@ -1,6 +1,6 @@
 # Third-party notices
 
-vScribe is MIT licensed (see [LICENSE](LICENSE)). It builds on the work below. Each project keeps its own
+VScrybe is MIT licensed (see [LICENSE](LICENSE)). It builds on the work below. Each project keeps its own
 license; the full texts ship inside the respective packages and are linked here.
 
 ## Bundled in the source tree
@@ -44,7 +44,7 @@ The full list of Rust crates and exact versions is in `src-tauri/Cargo.lock`.
 
 ## FFmpeg
 
-vScribe decodes audio with FFmpeg 8.1, built from the unmodified upstream source by `packaging/ffmpeg/build.sh` with
+VScrybe decodes audio with FFmpeg 8.1, built from the unmodified upstream source by `packaging/ffmpeg/build.sh` with
 only the demuxers, parsers and audio decoders listed there. It is licensed under the
-[GNU LGPL version 2.1 or later](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html). Because vScribe is open
+[GNU LGPL version 2.1 or later](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html). Because VScrybe is open
 source, you can rebuild it against a modified FFmpeg by changing that script and building from this repository.

@@ -276,7 +276,7 @@ fn url(repo: &str, file: &str) -> String {
 
 fn client() -> Result<reqwest::blocking::Client, reqwest::Error> {
     reqwest::blocking::Client::builder()
-        .user_agent("vscribe")
+        .user_agent(crate::ID)
         .connect_timeout(Duration::from_secs(20))
         .timeout(Duration::from_secs(60))
         .build()
@@ -654,7 +654,7 @@ mod tests {
 
     #[test]
     fn a_folder_missing_its_weights_is_refused_by_name() {
-        let folder = std::env::temp_dir().join(format!("vscribe-model-test-{}", std::process::id()));
+        let folder = std::env::temp_dir().join(format!("vscrybe-model-test-{}", std::process::id()));
         fs::create_dir_all(&folder).unwrap();
         for file in ["config.json", "tokenizer.json", "vocabulary.txt"] {
             fs::write(folder.join(file), "{}").unwrap();
@@ -678,7 +678,7 @@ mod tests {
 
     #[test]
     fn an_unreadable_registry_is_ignored_rather_than_fatal() {
-        let file = std::env::temp_dir().join(format!("vscribe-models-test-{}.json", std::process::id()));
+        let file = std::env::temp_dir().join(format!("vscrybe-models-test-{}.json", std::process::id()));
         fs::write(&file, "not json").unwrap();
         assert!(read_registry(&file).is_empty());
         fs::remove_file(&file).unwrap();

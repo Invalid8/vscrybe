@@ -1,13 +1,13 @@
 [package]
-name = "vscribe"
+name = "vscrybe"
 version = "0.3.0"
 description = "Convert audio and voice notes to text, on your own computer"
-authors = ["vScribe contributors <b.fadamitan2019@gmail.com>"]
+authors = ["VScrybe contributors <b.fadamitan2019@gmail.com>"]
 license = "MIT"
 edition = "2024"
 
 [lib]
-name = "vscribe_lib"
+name = "vscrybe_lib"
 crate-type = ["rlib"]
 
 [build-dependencies]

@@ -1,7 +1,7 @@
 [project]
-name = "vscribe-e2e"
+name = "vscrybe-e2e"
 version = "0"
-description = "Browser tests for vScribe, run against `vscribe serve`"
+description = "Browser tests for VScrybe, run against `vscrybe serve`"
 requires-python = ">=3.12"
 dependencies = ["pytest>=9.1.1", "pytest-playwright>=0.9.0", "playwright>=1.63.0"]
 

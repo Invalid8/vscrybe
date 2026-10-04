@@ -177,7 +177,9 @@ impl Page {
             ("base_url", Value::from(format!("http://{host}"))),
             ("version", Value::from(env!("CARGO_PKG_VERSION"))),
             ("data_dir", Value::from(paths::tilde(app.store.root()))),
-            ("log_file", Value::from(paths::tilde(&paths::log_dir().join("vscribe.log")))),
+            ("log_file", Value::from(paths::tilde(&paths::log_file()))),
+            ("app_name", Value::from(crate::NAME)),
+            ("app_id", Value::from(crate::ID)),
         ]);
         context.extend(self.context);
         let html = app

@@ -3,6 +3,6 @@
 <plist version="1.0">
 <dict>
   <key>NSMicrophoneUsageDescription</key>
-  <string>vScribe records voice notes from your microphone when you press record. Recordings stay on this computer.</string>
+  <string>VScrybe records voice notes from your microphone when you press record. Recordings stay on this computer.</string>
 </dict>
 </plist>

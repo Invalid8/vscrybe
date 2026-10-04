@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the decode-only static FFmpeg that vScribe links into its binary.
+# Builds the decode-only static FFmpeg that VScrybe links into its binary.
 # Usage: packaging/ffmpeg/build.sh [prefix]   (default prefix: packaging/ffmpeg/out)
 # On Windows, run from an MSYS2 shell that inherits an MSVC developer environment.
 set -euo pipefail

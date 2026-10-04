@@ -24,7 +24,7 @@ def expect_toast(page: Page, message: str, kind: str = "success"):
 def expect_tray_stored(page: Page, count: int):
     page.wait_for_function(
         """(count) => new Promise((resolve) => {
-          const open = indexedDB.open("vscribe", 1);
+          const open = indexedDB.open("vscrybe", 1);
           open.onsuccess = () => {
             const request = open.result.transaction("staged").objectStore("staged").count();
             request.onsuccess = () => {

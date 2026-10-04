@@ -393,7 +393,7 @@ wheels = [
 ]
 
 [[package]]
-name = "vscribe-e2e"
+name = "vscrybe-e2e"
 version = "0"
 source = { virtual = "." }
 dependencies = [

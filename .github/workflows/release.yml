@@ -126,11 +126,11 @@ jobs:
       - name: Give the installers stable names for releases/latest/download links
         working-directory: bundles
         run: |
-          mv *_x64-setup.exe vScribe-windows-x64-setup.exe
-          mv *_aarch64.dmg vScribe-macos-arm64.dmg
-          mv *_x64.dmg vScribe-macos-x64.dmg
-          mv *_amd64.deb vScribe-linux-amd64.deb
-          mv *_amd64.AppImage vScribe-linux-amd64.AppImage
+          mv *_x64-setup.exe VScrybe-windows-x64-setup.exe
+          mv *_aarch64.dmg VScrybe-macos-arm64.dmg
+          mv *_x64.dmg VScrybe-macos-x64.dmg
+          mv *_amd64.deb VScrybe-linux-amd64.deb
+          mv *_amd64.AppImage VScrybe-linux-amd64.AppImage
           ls -l
 
       - name: Attach to a draft release

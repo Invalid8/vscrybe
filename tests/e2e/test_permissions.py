@@ -20,13 +20,13 @@ def test_file_access_asks_once(onboarded_user: Page):
     consent(page).get_by_role("button", name="Not now").click()
     expect(consent(page)).to_be_hidden()
     assert choosers == []
-    assert page.evaluate("localStorage.getItem('vscribe-consent-files')") is None
+    assert page.evaluate("localStorage.getItem('vscrybe-consent-files')") is None
 
     page.get_by_role("button", name="Add voice notes", exact=True).click()
     with page.expect_file_chooser() as chooser:
         consent(page).get_by_role("button", name="Allow file access").click()
     assert chooser.value.is_multiple()
-    assert page.evaluate("localStorage.getItem('vscribe-consent-files')") == "granted"
+    assert page.evaluate("localStorage.getItem('vscrybe-consent-files')") == "granted"
 
     page.reload()
     with page.expect_file_chooser():
@@ -51,7 +51,7 @@ def test_microphone_denied_does_not_record(onboarded_user: Page):
     expect(consent(page).get_by_role("heading")).to_have_text("Use your microphone?")
     consent(page).get_by_role("button", name="Not now").click()
     expect(page.locator(".composer-rec")).to_be_hidden()
-    assert page.evaluate("localStorage.getItem('vscribe-consent-mic')") is None
+    assert page.evaluate("localStorage.getItem('vscrybe-consent-mic')") is None
 
 
 def test_recording_after_consent_is_transcribed(onboarded_user: Page):
@@ -72,7 +72,7 @@ def test_recording_after_consent_is_transcribed(onboarded_user: Page):
     expect(note.locator(".vn-name")).to_have_text(re.compile(r"^Recording \d{4}-\d\d-\d\d at [\d.]+\.wav$"))
     expect(note.locator(".transcript")).to_be_visible(timeout=120_000)
     expect(note).not_to_have_class(re.compile("is-failed"))
-    assert page.evaluate("localStorage.getItem('vscribe-consent-mic')") == "granted"
+    assert page.evaluate("localStorage.getItem('vscrybe-consent-mic')") == "granted"
 
 
 def test_escape_discards_a_recording(returning_user: Page):

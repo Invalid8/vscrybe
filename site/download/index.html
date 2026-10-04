@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Download vScribe for Windows, Mac and Linux</title>
-  <meta name="description" content="Download vScribe free for Windows 10 and 11, macOS on Apple silicon and Intel, and Linux as a .deb or AppImage.">
-  <link rel="canonical" href="https://vscribe.dalgoridim.com/download/">
+  <title>Download VScrybe for Windows, Mac and Linux</title>
+  <meta name="description" content="Download VScrybe free for Windows 10 and 11, macOS on Apple silicon and Intel, and Linux as a .deb or AppImage.">
+  <link rel="canonical" href="https://vscrybe.dalgoridim.com/download/">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="vScribe">
-  <meta property="og:url" content="https://vscribe.dalgoridim.com/download/">
-  <meta property="og:title" content="Download vScribe">
+  <meta property="og:site_name" content="VScrybe">
+  <meta property="og:url" content="https://vscrybe.dalgoridim.com/download/">
+  <meta property="og:title" content="Download VScrybe">
   <meta property="og:description" content="Free for Windows, Mac and Linux. Voice notes to text, on your computer.">
-  <meta property="og:image" content="https://vscribe.dalgoridim.com/assets/img/og.jpg">
+  <meta property="og:image" content="https://vscrybe.dalgoridim.com/assets/img/og.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
@@ -25,7 +25,7 @@
 </head>
 <body x-data>
   <header class="nav" x-data="{ open: false }">
-    <a class="brand" href="/"><img src="/assets/img/icon.svg" alt="">vScribe</a>
+    <a class="brand" href="/"><img src="/assets/img/icon.svg" alt="">VScrybe</a>
     <nav class="nav-links" :class="open && 'open'" @click="open = false">
       <a href="/#features">Features</a>
       <a href="/#languages">Languages</a>
@@ -36,7 +36,7 @@
       <button class="btn btn-raised btn-round" type="button" @click="$store.theme.toggle()" :aria-label="$store.theme.dark ? 'Use light theme' : 'Use dark theme'" aria-label="Switch theme">
         <svg class="icon"><use :href="$store.theme.dark ? '/assets/icons.svg#sun' : '/assets/icons.svg#moon'" href="/assets/icons.svg#moon"/></svg>
       </button>
-      <a class="btn btn-raised stars" href="https://github.com/Invalid8/vscribe" aria-label="vScribe on GitHub">
+      <a class="btn btn-raised stars" href="https://github.com/Invalid8/vscrybe" aria-label="VScrybe on GitHub">
         <svg class="icon"><use href="/assets/icons.svg#star"/></svg>
         <span x-text="$store.release.stars" x-show="$store.release.stars" x-cloak></span>
         <svg class="icon"><use href="/assets/icons.svg#github"/></svg>
@@ -50,7 +50,7 @@
 
   <main>
     <section class="page-head">
-      <h1>Download vScribe</h1>
+      <h1>Download VScrybe</h1>
       <p class="muted" x-text="$store.release.version ? `Version ${$store.release.version} · ${$store.release.date} · Free and open source` : 'Free and open source'">Free and open source</p>
       <div class="pick" x-show="!$store.device.phone && $store.device.os !== 'other'" x-cloak>
         <div class="card-head">
@@ -65,7 +65,7 @@
       <div class="pick" x-show="$store.device.phone" x-cloak x-data="share">
         <div>
           <h2>You're on a phone</h2>
-          <p>vScribe installs on a computer. Send this page to yours.</p>
+          <p>VScrybe installs on a computer. Send this page to yours.</p>
         </div>
         <div class="stack">
           <button class="btn btn-primary btn-block" type="button" @click="send()"><svg class="icon"><use href="/assets/icons.svg#desktop-tower"/></svg>Send to my computer</button>
@@ -84,41 +84,41 @@
           <h3 id="windows"><svg class="icon"><use href="/assets/icons.svg#windows"/></svg>Windows</h3>
           <div class="row">
             <div><strong>Windows 10 and 11</strong><span>64-bit installer</span></div>
-            <code>vScribe-windows-x64-setup.exe</code>
+            <code>VScrybe-windows-x64-setup.exe</code>
             <data x-text="$store.release.size('windows')"></data>
-            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscribe/releases/latest/download/vScribe-windows-x64-setup.exe"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
+            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-windows-x64-setup.exe"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
           </div>
           <h3 id="mac"><svg class="icon"><use href="/assets/icons.svg#apple"/></svg>macOS</h3>
           <div class="row">
             <div><strong>Apple silicon</strong><span>M1, M2, M3, M4 and later</span></div>
-            <code>vScribe-macos-arm64.dmg</code>
+            <code>VScrybe-macos-arm64.dmg</code>
             <data x-text="$store.release.size('macArm')"></data>
-            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscribe/releases/latest/download/vScribe-macos-arm64.dmg"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
+            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-macos-arm64.dmg"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
           </div>
           <div class="row">
             <div><strong>Intel Mac</strong><span>Most Macs from before 2021</span></div>
-            <code>vScribe-macos-x64.dmg</code>
+            <code>VScrybe-macos-x64.dmg</code>
             <data x-text="$store.release.size('macIntel')"></data>
-            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscribe/releases/latest/download/vScribe-macos-x64.dmg"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
+            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-macos-x64.dmg"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
           </div>
           <h3 id="linux"><svg class="icon"><use href="/assets/icons.svg#linux"/></svg>Linux</h3>
           <div class="row">
             <div><strong>Ubuntu and Debian</strong><span>Also Mint and Pop!_OS</span></div>
-            <code>vScribe-linux-amd64.deb</code>
+            <code>VScrybe-linux-amd64.deb</code>
             <data x-text="$store.release.size('deb')"></data>
-            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscribe/releases/latest/download/vScribe-linux-amd64.deb"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
+            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-linux-amd64.deb"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
           </div>
           <div class="row">
             <div><strong>Any distro (AppImage)</strong><span>Make it executable, then open it</span></div>
-            <code>vScribe-linux-amd64.AppImage</code>
+            <code>VScrybe-linux-amd64.AppImage</code>
             <data x-text="$store.release.size('appimage')"></data>
-            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscribe/releases/latest/download/vScribe-linux-amd64.AppImage"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
+            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-linux-amd64.AppImage"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
           </div>
         </div>
         <nav class="more" aria-label="More">
-          <a class="link" href="https://github.com/Invalid8/vscribe"><svg class="icon"><use href="/assets/icons.svg#github"/></svg>Source code on GitHub</a>
-          <a class="link" href="https://github.com/Invalid8/vscribe/releases"><svg class="icon"><use href="/assets/icons.svg#clock-counter-clockwise"/></svg>Older versions and release notes</a>
-          <a class="link" href="https://github.com/Invalid8/vscribe#command-line"><svg class="icon"><use href="/assets/icons.svg#terminal-window"/></svg>Command line guide</a>
+          <a class="link" href="https://github.com/Invalid8/vscrybe"><svg class="icon"><use href="/assets/icons.svg#github"/></svg>Source code on GitHub</a>
+          <a class="link" href="https://github.com/Invalid8/vscrybe/releases"><svg class="icon"><use href="/assets/icons.svg#clock-counter-clockwise"/></svg>Older versions and release notes</a>
+          <a class="link" href="https://github.com/Invalid8/vscrybe#command-line"><svg class="icon"><use href="/assets/icons.svg#terminal-window"/></svg>Command line guide</a>
         </nav>
       </div>
 
@@ -135,9 +135,9 @@
           <h3><svg class="icon"><use href="/assets/icons.svg#shield-check"/></svg>Opening it the first time</h3>
           <ol>
             <li>Windows: if you see “Windows protected your PC”, choose More info, then Run anyway.</li>
-            <li>Mac: open System Settings → Privacy &amp; Security and click Open Anyway next to vScribe.</li>
+            <li>Mac: open System Settings → Privacy &amp; Security and click Open Anyway next to VScrybe.</li>
             <li>Linux AppImage: run <code>chmod +x</code> on the file, or tick “Allow executing” in its properties.</li>
-            <li>This only happens once. vScribe isn't code-signed yet.</li>
+            <li>This only happens once. VScrybe isn't code-signed yet.</li>
           </ol>
         </section>
         <section>
@@ -155,14 +155,14 @@
     <div class="footer-row">
       <div>
         <p>Convert audio and voice notes to text, locally. Free and open source.</p>
-        <small>© 2026 vScribe contributors · MIT licence</small>
+        <small>© 2026 VScrybe contributors · MIT licence</small>
       </div>
       <nav aria-label="Footer">
         <ul><li>Product</li><li><a href="/#features">Features</a></li><li><a href="/#languages">Languages</a></li><li><a href="/#privacy">Privacy</a></li><li><a href="/download/">Download</a></li></ul>
-        <ul><li>Project</li><li><a href="https://github.com/Invalid8/vscribe">GitHub</a></li><li><a href="https://github.com/Invalid8/vscribe/blob/main/CHANGELOG.md">Changelog</a></li><li><a href="https://github.com/Invalid8/vscribe/issues">Report an issue</a></li><li><a href="https://github.com/Invalid8/vscribe/blob/main/THIRD_PARTY_NOTICES.md">Licences</a></li></ul>
+        <ul><li>Project</li><li><a href="https://github.com/Invalid8/vscrybe">GitHub</a></li><li><a href="https://github.com/Invalid8/vscrybe/blob/main/CHANGELOG.md">Changelog</a></li><li><a href="https://github.com/Invalid8/vscrybe/issues">Report an issue</a></li><li><a href="https://github.com/Invalid8/vscrybe/blob/main/THIRD_PARTY_NOTICES.md">Licences</a></li></ul>
       </nav>
     </div>
-    <p class="wordmark" aria-hidden="true">vScribe</p>
+    <p class="wordmark" aria-hidden="true">VScrybe</p>
   </footer>
 </body>
 </html>

@@ -8,14 +8,14 @@ from playwright.sync_api import Page
 
 ROOT = Path(__file__).parent.parent.parent
 FIXTURES = ROOT / "tests" / "fixtures"
-VN = Path(os.environ.get("VSCRIBE_BIN", ROOT / "src-tauri" / "target" / "debug" / "vscribe"))
-READY = "VSCRIBE_READY "
+VN = Path(os.environ.get("VSCRYBE_BIN", ROOT / "src-tauri" / "target" / "debug" / "vscrybe"))
+READY = "VSCRYBE_READY "
 VERSION = tomllib.loads((ROOT / "src-tauri" / "Cargo.toml").read_text())["package"]["version"]
 
 RETURNING_USER = """
-localStorage.setItem("vscribe-onboarded", "yes");
-localStorage.setItem("vscribe-consent-mic", "granted");
-localStorage.setItem("vscribe-consent-files", "granted");
+localStorage.setItem("vscrybe-onboarded", "yes");
+localStorage.setItem("vscrybe-consent-mic", "granted");
+localStorage.setItem("vscrybe-consent-files", "granted");
 """
 
 CLIPBOARD_SPY = """
@@ -75,6 +75,6 @@ def returning_user(page: Page) -> Page:
 
 @pytest.fixture
 def onboarded_user(page: Page) -> Page:
-    page.add_init_script('localStorage.setItem("vscribe-onboarded", "yes");' + CLIPBOARD_SPY)
+    page.add_init_script('localStorage.setItem("vscrybe-onboarded", "yes");' + CLIPBOARD_SPY)
     page.goto("/")
     return page

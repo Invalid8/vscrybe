@@ -40,14 +40,14 @@ jobs:
       - name: Cache Whisper model
         uses: actions/cache@v4
         with:
-          path: ~/.cache/vscribe/models
+          path: ~/.cache/vscrybe/models
           key: whisper-small-ct2-v2
 
       - name: Rust tests
         run: cargo test --manifest-path src-tauri/Cargo.toml
 
       - name: Download the Fast model
-        run: src-tauri/target/debug/vscribe transcribe tests/fixtures/jfk.opus --stdout
+        run: src-tauri/target/debug/vscrybe transcribe tests/fixtures/jfk.opus --stdout
 
       - name: Give the browsers a sound card
         run: pulseaudio --start --exit-idle-time=-1
