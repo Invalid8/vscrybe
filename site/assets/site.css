@@ -89,18 +89,14 @@ h1, h2, h3 { font-family: var(--display); font-weight: 700; line-height: 1; lett
 
 .nav { position: sticky; top: 0; z-index: 10; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 22px 48px; transition: padding 0.25s; }
 .brand { display: flex; align-items: center; gap: 10px; justify-self: start; font: 700 22px var(--display); letter-spacing: -0.02em; }
-.brand, .nav-actions { border: 1px solid transparent; border-radius: 999px; transition: padding 0.25s, background-color 0.25s, border-color 0.25s, box-shadow 0.25s; }
-.nav-links { transition: opacity 0.2s, visibility 0.2s; }
 .nav.stuck { padding-block: 12px; pointer-events: none; }
 .nav.stuck > * { pointer-events: auto; }
-.nav.stuck .brand, .nav.stuck .nav-actions { background: var(--glass); border-color: var(--line); box-shadow: 0 8px 24px rgb(16 24 42 / 0.12); backdrop-filter: blur(16px); }
-.nav.stuck .brand { padding: 6px 18px 6px 6px; }
-.nav.stuck .nav-actions { padding: 6px; }
+.nav.stuck .nav-actions { padding: 6px; background: var(--glass); border-color: var(--line); box-shadow: 0 8px 24px rgb(16 24 42 / 0.12); backdrop-filter: blur(16px); }
 .nav.stuck .nav-links:not(.open) { opacity: 0; visibility: hidden; }
 .brand img { width: 34px; height: 34px; }
-.nav-links { display: flex; gap: 40px; font-weight: 500; font-size: 15px; color: var(--muted); }
+.nav-links { display: flex; gap: 40px; font-weight: 500; font-size: 15px; color: var(--muted); transition: opacity 0.2s, visibility 0.2s; }
 .nav-links a:hover { color: var(--ink); }
-.nav-actions { display: flex; gap: 12px; justify-self: end; }
+.nav-actions { display: flex; gap: 12px; justify-self: end; border: 1px solid transparent; border-radius: 999px; transition: padding 0.25s, background-color 0.25s, border-color 0.25s, box-shadow 0.25s; }
 .stars { gap: 8px; padding: 0 14px; font: 14px var(--mono); }
 .stars .icon:last-child { width: 20px; height: 20px; }
 .menu { display: none; }
