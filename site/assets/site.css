@@ -183,7 +183,7 @@ h1, h2, h3 { font-family: var(--display); font-weight: 700; line-height: 1; lett
 .footer nav { display: flex; gap: 88px; }
 .footer nav ul { display: grid; gap: 12px; font-weight: 500; font-size: 15px; }
 .footer nav li:first-child { font: 12px var(--mono); letter-spacing: 0.13em; text-transform: uppercase; color: var(--faint); }
-.wordmark { margin-bottom: -0.21em; font: 700 clamp(104px, 23vw, 330px)/0.82 var(--display); letter-spacing: -0.045em; text-align: center; color: var(--primary); }
+.wordmark { margin-bottom: -0.21em; font: 700 min(23vw, 330px)/0.82 var(--display); letter-spacing: -0.045em; text-align: center; color: var(--primary); }
 
 .page-head { display: grid; justify-items: center; gap: 20px; padding: 80px var(--gutter) 56px; text-align: center; }
 .page-head h1 { font-size: clamp(42px, 5.8vw, 84px); }
