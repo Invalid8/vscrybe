@@ -3,7 +3,13 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore: ["site/**", "docs/**", "**.md", ".github/workflows/pages.yml"]
   pull_request:
+    paths-ignore: ["site/**", "docs/**", "**.md", ".github/workflows/pages.yml"]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
