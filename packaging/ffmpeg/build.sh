@@ -17,7 +17,7 @@ fi
 mkdir -p "$work"
 cd "$work"
 if [ ! -d "ffmpeg-$version" ]; then
-  curl -fsSL "https://ffmpeg.org/releases/ffmpeg-$version.tar.xz" -o "ffmpeg-$version.tar.xz"
+  curl -fsSL --retry 5 --retry-all-errors "https://ffmpeg.org/releases/ffmpeg-$version.tar.xz" -o "ffmpeg-$version.tar.xz"
   tar xJf "ffmpeg-$version.tar.xz"
 fi
 cd "ffmpeg-$version"
