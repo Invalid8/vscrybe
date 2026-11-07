@@ -49,7 +49,64 @@
   </header>
 
   <main>
-    <section class="page-head">
+    <section class="page-head thanks" x-show="$store.release.started" x-cloak x-transition:enter="rise" x-transition:enter-start="risen">
+      <h1>Thanks for downloading</h1>
+      <p class="muted">Your download has started. Didn't start? <a class="link" :href="$store.release.url($store.release.started)">Download again</a></p>
+      <ol class="steps">
+        <template x-for="(step, i) in $store.release.steps" :key="$store.release.started + i">
+          <li :style="`--i: ${i}`">
+            <div class="mock" aria-hidden="true">
+              <template x-if="step.mock === 'file'">
+                <div class="mock-card mock-file">
+                  <span class="os"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg></span>
+                  <span><strong x-text="$store.release.file"></strong><small x-text="[$store.release.size($store.release.started), 'Done'].filter(Boolean).join(' · ')"></small></span>
+                </div>
+              </template>
+              <template x-if="step.mock === 'smartscreen'">
+                <div class="mock-card">
+                  <strong>Windows protected your PC</strong>
+                  <span class="link">More info</span>
+                  <span class="mock-buttons"><span class="btn btn-primary btn-sm">Run anyway</span><span class="btn btn-raised btn-sm">Don't run</span></span>
+                </div>
+              </template>
+              <template x-if="step.mock === 'dmg'">
+                <div class="mock-card mock-dmg">
+                  <figure><img src="/assets/img/icon.svg" alt=""><figcaption>VScrybe</figcaption></figure>
+                  <svg class="icon"><use href="/assets/icons.svg#arrow-right"/></svg>
+                  <figure><span class="os"><svg class="icon"><use href="/assets/icons.svg#folder"/></svg></span><figcaption>Applications</figcaption></figure>
+                </div>
+              </template>
+              <template x-if="step.mock === 'security'">
+                <div class="mock-card">
+                  <strong>Security</strong>
+                  <span class="mock-row"><span>“VScrybe” was blocked to protect your Mac.</span><span class="btn btn-primary btn-sm">Open Anyway</span></span>
+                </div>
+              </template>
+              <template x-if="step.mock === 'terminal'">
+                <div class="mock-terminal">
+                  <span class="dots"><i></i><i></i><i></i></span>
+                  <code>$ sudo apt install \</code>
+                  <code class="arg">    ./VScrybe-linux-amd64.deb</code>
+                </div>
+              </template>
+              <template x-if="step.mock === 'permissions'">
+                <div class="mock-card">
+                  <strong>Permissions</strong>
+                  <span class="mock-row"><span>Allow executing as program</span><span class="switch"></span></span>
+                </div>
+              </template>
+              <template x-if="step.mock === 'app'">
+                <figure class="mock-app"><img src="/assets/img/icon.svg" alt=""><figcaption>VScrybe</figcaption></figure>
+              </template>
+            </div>
+            <h3><span class="num" x-text="i + 1"></span><span x-text="step.title"></span></h3>
+            <p x-text="step.text"></p>
+          </li>
+        </template>
+      </ol>
+    </section>
+
+    <section class="page-head" x-show="!$store.release.started">
       <h1>Download VScrybe</h1>
       <p class="muted" x-text="$store.release.version ? `Version ${$store.release.version} · ${$store.release.date} · Free and open source` : 'Free and open source'">Free and open source</p>
       <div class="pick" x-show="!$store.device.phone && $store.device.os !== 'other'" x-cloak>
@@ -60,7 +117,7 @@
             <p x-text="[$store.device.platform.detail, $store.release.size($store.device.platform.file)].filter(Boolean).join(' · ')"></p>
           </div>
         </div>
-        <a class="btn btn-primary btn-lg" :href="$store.release.url($store.device.platform.file)"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg>Download</a>
+        <a class="btn btn-primary btn-lg" :href="$store.release.url($store.device.platform.file)" @click="$store.release.start($store.device.platform.file)"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg>Download</a>
       </div>
       <div class="pick" x-show="$store.device.phone" x-cloak x-data="share">
         <div>
@@ -86,33 +143,33 @@
             <div><strong>Windows 10 and 11</strong><span>64-bit installer</span></div>
             <code>VScrybe-windows-x64-setup.exe</code>
             <data x-text="$store.release.size('windows')"></data>
-            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-windows-x64-setup.exe"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
+            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-windows-x64-setup.exe" @click="$store.release.start('windows')"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
           </div>
           <h3 id="mac"><svg class="icon"><use href="/assets/icons.svg#apple"/></svg>macOS</h3>
           <div class="row">
             <div><strong>Apple silicon</strong><span>M1, M2, M3, M4 and later</span></div>
             <code>VScrybe-macos-arm64.dmg</code>
             <data x-text="$store.release.size('macArm')"></data>
-            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-macos-arm64.dmg"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
+            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-macos-arm64.dmg" @click="$store.release.start('macArm')"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
           </div>
           <div class="row">
             <div><strong>Intel Mac</strong><span>Most Macs from before 2021</span></div>
             <code>VScrybe-macos-x64.dmg</code>
             <data x-text="$store.release.size('macIntel')"></data>
-            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-macos-x64.dmg"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
+            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-macos-x64.dmg" @click="$store.release.start('macIntel')"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
           </div>
           <h3 id="linux"><svg class="icon"><use href="/assets/icons.svg#linux"/></svg>Linux</h3>
           <div class="row">
             <div><strong>Ubuntu and Debian</strong><span>Also Mint and Pop!_OS</span></div>
             <code>VScrybe-linux-amd64.deb</code>
             <data x-text="$store.release.size('deb')"></data>
-            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-linux-amd64.deb"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
+            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-linux-amd64.deb" @click="$store.release.start('deb')"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
           </div>
           <div class="row">
             <div><strong>Any distro (AppImage)</strong><span>Make it executable, then open it</span></div>
             <code>VScrybe-linux-amd64.AppImage</code>
             <data x-text="$store.release.size('appimage')"></data>
-            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-linux-amd64.AppImage"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
+            <a class="btn btn-raised get" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-linux-amd64.AppImage" @click="$store.release.start('appimage')"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg><span>Download</span></a>
           </div>
         </div>
         <nav class="more" aria-label="More">
@@ -131,7 +188,7 @@
             <li>If Chip says Apple M1 or later, pick Apple silicon. If it says Intel, pick Intel Mac.</li>
           </ol>
         </section>
-        <section>
+        <section x-show="!$store.release.started">
           <h3><svg class="icon"><use href="/assets/icons.svg#shield-check"/></svg>Opening it the first time</h3>
           <ol>
             <li>Windows: if you see “Windows protected your PC”, choose More info, then Run anyway.</li>
@@ -155,7 +212,7 @@
     <div class="footer-row">
       <div>
         <p>Convert audio and voice notes to text, locally. Free and open source.</p>
-        <small>© 2026 VScrybe contributors · MIT licence</small>
+        <small>© 2026 VScrybe contributors · MIT licence<br>Built with <button class="love" type="button" x-data="love" @click="burst()" aria-label="Send some love">♥︎</button></small>
       </div>
       <nav aria-label="Footer">
         <ul><li>Product</li><li><a href="/#features">Features</a></li><li><a href="/#languages">Languages</a></li><li><a href="/#privacy">Privacy</a></li><li><a href="/download/">Download</a></li></ul>

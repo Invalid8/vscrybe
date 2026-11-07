@@ -71,7 +71,7 @@
       <h1>Voice notes to text,<br> right on your computer.</h1>
       <p>Drop in WhatsApp, Telegram or phone recordings and get clean, searchable text in about the time it takes to play them. Nothing is ever uploaded.</p>
       <div class="cta" x-show="!$store.device.phone">
-        <a class="btn btn-primary btn-lg" :href="$store.release.url($store.device.platform.file)" href="/download/">
+        <a class="btn btn-primary btn-lg" :href="'/download/?get=' + $store.device.platform.file" href="/download/">
           <svg class="icon"><use :href="'/assets/icons.svg#' + $store.device.platform.icon" href="/assets/icons.svg#download-simple"/></svg>
           <span x-text="'Download for ' + $store.device.platform.name">Download VScrybe</span>
           <svg class="icon"><use href="/assets/icons.svg#arrow-down"/></svg>
@@ -184,7 +184,7 @@
             <span class="os"><svg class="icon"><use href="/assets/icons.svg#windows"/></svg></span>
             <div><h3>Windows</h3><p>Windows 10 and 11</p></div>
           </div>
-          <a class="btn btn-primary btn-block" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-windows-x64-setup.exe"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg>Download installer</a>
+          <a class="btn btn-primary btn-block" href="/download/?get=windows"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg>Download installer</a>
           <p>If Windows says it protected your PC, choose More info, then Run anyway. The app isn't code-signed yet.</p>
         </article>
         <article class="card">
@@ -193,8 +193,8 @@
             <div><h3>macOS</h3><p>macOS 11 or later</p></div>
           </div>
           <div class="stack">
-            <a class="btn btn-primary btn-block" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-macos-arm64.dmg"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg>Apple silicon (M1 and later)</a>
-            <a class="btn btn-raised btn-block" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-macos-x64.dmg"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg>Intel Mac</a>
+            <a class="btn btn-primary btn-block" href="/download/?get=macArm"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg>Apple silicon (M1 and later)</a>
+            <a class="btn btn-raised btn-block" href="/download/?get=macIntel"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg>Intel Mac</a>
           </div>
           <p>Not sure which? Apple menu → About This Mac → Chip. First launch: System Settings → Privacy &amp; Security → Open Anyway.</p>
         </article>
@@ -204,8 +204,8 @@
             <div><h3>Linux</h3><p>64-bit · .deb or AppImage</p></div>
           </div>
           <div class="stack">
-            <a class="btn btn-primary btn-block" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-linux-amd64.deb"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg>Download .deb</a>
-            <a class="btn btn-raised btn-block" href="https://github.com/Invalid8/vscrybe/releases/latest/download/VScrybe-linux-amd64.AppImage"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg>AppImage · any distro</a>
+            <a class="btn btn-primary btn-block" href="/download/?get=deb"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg>Download .deb</a>
+            <a class="btn btn-raised btn-block" href="/download/?get=appimage"><svg class="icon"><use href="/assets/icons.svg#download-simple"/></svg>AppImage · any distro</a>
           </div>
           <p>The .deb suits Ubuntu, Debian, Mint and Pop!_OS. The AppImage runs on any distro: make it executable and open it.</p>
         </article>
@@ -229,7 +229,7 @@
     <section class="closing">
       <div class="glass">
         <h2>Your voice notes, finally searchable.</h2>
-        <a class="btn btn-primary btn-lg" x-show="!$store.device.phone" :href="$store.release.url($store.device.platform.file)" href="/download/">
+        <a class="btn btn-primary btn-lg" x-show="!$store.device.phone" :href="'/download/?get=' + $store.device.platform.file" href="/download/">
           <svg class="icon"><use :href="'/assets/icons.svg#' + $store.device.platform.icon" href="/assets/icons.svg#download-simple"/></svg>
           <span x-text="'Download for ' + $store.device.platform.name">Download VScrybe</span>
         </a>
@@ -244,7 +244,7 @@
     <div class="footer-row">
       <div>
         <p>Convert audio and voice notes to text, locally. Free and open source.</p>
-        <small>© 2026 VScrybe contributors · MIT licence</small>
+        <small>© 2026 VScrybe contributors · MIT licence<br>Built with <button class="love" type="button" x-data="love" @click="burst()" aria-label="Send some love">♥︎</button></small>
       </div>
       <nav aria-label="Footer">
         <ul><li>Product</li><li><a href="/#features">Features</a></li><li><a href="/#languages">Languages</a></li><li><a href="/#privacy">Privacy</a></li><li><a href="/download/">Download</a></li></ul>
