@@ -49,6 +49,18 @@ const TEMPERATURES: [f32; 6] = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
 const COMPRESSION_LIMIT: f64 = 2.4;
 const LOG_PROB_LIMIT: f32 = -1.0;
 const NO_SPEECH_LIMIT: f32 = 0.6;
+const SHORT_BURST: usize = RATE * 3 / 2;
+
+const PHANTOMS: &[(&str, &[&str])] = &[(
+    "en",
+    &["you", "thank you", "thank you very much", "thanks", "thanks for watching", "thank you for watching", "shh", "shhh"],
+)];
+
+fn is_phantom(text: &str, language: &str) -> bool {
+    let words: String = text.chars().filter(|c| c.is_alphanumeric() || c.is_whitespace()).collect();
+    let words = words.to_lowercase().split_whitespace().collect::<Vec<_>>().join(" ");
+    PHANTOMS.iter().any(|(code, phrases)| *code == language && phrases.contains(&words.as_str()))
+}
 
 struct Attempt {
     pieces: Vec<Piece>,
@@ -134,11 +146,13 @@ impl Engine {
                     return Err(Error::Interrupted);
                 };
                 let resumed = seek > chunk.start;
-                let (found, consumed) = if attempt.is_silence() || (resumed && !attempt.is_confident_speech()) {
+                let (mut found, consumed) = if attempt.is_silence() || (resumed && !attempt.is_confident_speech()) {
                     (Vec::new(), window.len())
                 } else {
                     advance(&attempt.pieces, window, threshold)
                 };
+                let doubtful = attempt.no_speech_prob > NO_SPEECH_LIMIT || chunk.len() < SHORT_BURST;
+                found.retain(|s| s.text.chars().any(char::is_alphanumeric) && !(doubtful && is_phantom(&s.text, &language)));
                 let offset = seek as f64 / RATE as f64;
                 segments.extend(found.into_iter().map(|s| Segment {
                     start: round2(offset + s.start),
@@ -348,12 +362,12 @@ pub fn segments_from(pieces: &[Piece], length: f64) -> Vec<Segment> {
             Piece::Text(t) => text.push_str(t),
             Piece::Time(time) => match start {
                 Some(s) if !text.trim().is_empty() => {
-                    flush(s, *time, &mut text, &mut segments);
+                    flush(s, time.min(length), &mut text, &mut segments);
                     start = None;
                 }
                 _ => {
                     text.clear();
-                    start = Some(*time);
+                    start = Some(time.min(length));
                 }
             },
         }
@@ -381,6 +395,25 @@ mod tests {
         assert_eq!((s[0].start, s[0].end, s[0].text.as_str()), (0.0, 2.4, "Hello there."));
         assert_eq!((s[1].start, s[1].end, s[1].text.as_str()), (2.4, 5.0, "How are you?"));
         assert_eq!((s[2].start, s[2].end, s[2].text.as_str()), (5.2, 8.0, "Trailing"));
+    }
+
+    #[test]
+    fn timestamps_past_the_audio_are_capped_at_its_end() {
+        let s = segments_from(&[t(0.0), w(" Send the account."), t(23.0), t(26.0), w(" Yeah."), t(27.0)], 25.5);
+        assert_eq!((s[0].start, s[0].end), (0.0, 23.0));
+        assert_eq!((s[1].start, s[1].end), (25.5, 25.5));
+        let s = segments_from(&[t(0.0), w(" Yes."), t(10.0)], 6.54);
+        assert_eq!((s[0].start, s[0].end), (0.0, 6.54));
+    }
+
+    #[test]
+    fn known_hallucinations_match_whatever_their_punctuation() {
+        assert!(is_phantom(" Thank you.", "en"));
+        assert!(is_phantom("Thanks for watching!", "en"));
+        assert!(is_phantom("You", "en"));
+        assert!(!is_phantom("Thank you.", "fr"));
+        assert!(!is_phantom("Okay.", "en"));
+        assert!(!is_phantom("Thank you for the results.", "en"));
     }
 
     #[test]

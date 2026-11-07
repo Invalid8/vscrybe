@@ -5,6 +5,18 @@ and the project uses [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 
+### Added
+- `vscrybe transcribe` shows progress: an updating line in a terminal, or a plain line every 10% or 30 seconds
+  when stderr goes to a pipe or log. Each file ends with how long the audio was and how long it took, which is
+  also written to `vscrybe.log`.
+- `--stdout` with several files puts a `==> file <==` header above each transcript.
+
+### Fixed
+- Whisper's stock phrases ("Thank you.", "You", "Shh.") no longer appear as lines in quiet or noisy stretches,
+  and lines with no words at all (a lone ".") are dropped.
+- Timestamps could go backwards near a pause, because Whisper sometimes placed a line after the end of the
+  audio it was given.
+
 ## [0.3.0] - 2026-10-03
 
 First public release, now also for Windows and macOS.

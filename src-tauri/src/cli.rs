@@ -1,12 +1,14 @@
 use std::fs;
-use std::io::Read;
+use std::io::{IsTerminal, Read, Write};
 use std::ops::ControlFlow;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
+use std::time::{Duration, Instant};
 
 use clap::{Parser, Subcommand};
-use crate::engine::models;
 use crate::engine::transcribe::{DEFAULT_LANGUAGE, Engine, LANGUAGES, is_language};
+use crate::engine::transcript::clock;
+use crate::engine::{models, probe_duration};
 use crate::web::AUDIO_EXTENSIONS;
 
 const READY: &str = "VSCRYBE_READY";
@@ -124,7 +126,77 @@ fn collect_audio(paths: &[PathBuf]) -> Vec<PathBuf> {
     files
 }
 
+struct Progress {
+    file: PathBuf,
+    audio: Option<f64>,
+    started: Instant,
+    live: bool,
+    width: usize,
+    reported: (Instant, f64),
+}
+
+impl Progress {
+    fn start(path: &Path) -> Self {
+        eprintln!("...   {}", path.display());
+        let started = Instant::now();
+        Self {
+            file: path.to_path_buf(),
+            audio: probe_duration(path),
+            started,
+            live: std::io::stderr().is_terminal(),
+            width: 0,
+            reported: (started, 0.0),
+        }
+    }
+
+    fn update(&mut self, fraction: f64) {
+        let percent = format!("{:>3}%", (fraction * 100.0).floor());
+        let position = self.audio.map(|total| format!("  {} / {}", clock(total * fraction), clock(total))).unwrap_or_default();
+        if self.live {
+            let left = remaining(self.started.elapsed(), fraction).map(|left| format!("  about {} left", clock(left))).unwrap_or_default();
+            self.redraw(&format!("      {percent}{position}{left}"));
+            return;
+        }
+        let (at, last) = self.reported;
+        if fraction >= last + QUIET_STEP || (fraction > last && at.elapsed() >= QUIET_INTERVAL) {
+            eprintln!("      {percent}{position}  {}", self.file.display());
+            self.reported = (Instant::now(), fraction);
+        }
+    }
+
+    fn redraw(&mut self, line: &str) {
+        let width = line.chars().count();
+        let mut stderr = std::io::stderr().lock();
+        let _ = write!(stderr, "\r{line}{:pad$}", "", pad = self.width.saturating_sub(width));
+        let _ = stderr.flush();
+        self.width = width;
+    }
+
+    fn clear(&mut self) {
+        if self.width > 0 {
+            self.redraw("");
+            eprint!("\r");
+        }
+    }
+
+    fn done(&self, written: &Path, audio: f64, model: &str) {
+        let elapsed = self.started.elapsed().as_secs_f64();
+        let summary = format!("{} of audio in {} ({:.1}× real time)", clock(audio), clock(elapsed), audio / elapsed.max(0.001));
+        eprintln!("done  {}  {summary}", written.display());
+        let name = self.file.file_name().unwrap_or_default().to_string_lossy();
+        log::info!("Transcribed {name} with {model}: {summary}");
+    }
+}
+
+const QUIET_STEP: f64 = 0.1;
+const QUIET_INTERVAL: Duration = Duration::from_secs(30);
+
+fn remaining(elapsed: Duration, fraction: f64) -> Option<f64> {
+    (fraction > 0.0).then(|| elapsed.as_secs_f64() * (1.0 - fraction) / fraction)
+}
+
 fn transcribe(paths: &[PathBuf], model: &str, language: &str, timestamps: bool, force: bool, stdout: bool) -> ExitCode {
+    crate::setup_logging();
     if models::find(model).is_none() {
         eprintln!("Unknown model “{model}”. Use one of: {}.", models::all().iter().map(|m| m.name.as_str()).collect::<Vec<_>>().join(", "));
         return ExitCode::FAILURE;
@@ -148,6 +220,8 @@ fn transcribe(paths: &[PathBuf], model: &str, language: &str, timestamps: bool, 
             return ExitCode::FAILURE;
         }
     };
+    let headers = stdout && files.len() > 1;
+    let mut printed = false;
     let mut failed = 0;
     for path in &files {
         let out = path.with_extension("txt");
@@ -155,19 +229,34 @@ fn transcribe(paths: &[PathBuf], model: &str, language: &str, timestamps: bool, 
             eprintln!("skip  {}  (already has {})", path.display(), out.file_name().unwrap_or_default().to_string_lossy());
             continue;
         }
-        eprintln!("...   {}", path.display());
-        let result = engine.transcribe(path, language, &mut |_| ControlFlow::Continue(())).map_err(|e| e.to_string()).and_then(|t| {
+        let mut progress = Progress::start(path);
+        let transcribed = engine.transcribe(path, language, &mut |fraction| {
+            progress.update(fraction);
+            ControlFlow::Continue(())
+        });
+        progress.clear();
+        let result = transcribed.map_err(|e| e.to_string()).and_then(|t| {
             let text = if timestamps { t.timestamped() } else { t.text() };
             if stdout {
+                if headers {
+                    if printed {
+                        println!();
+                    }
+                    println!("==> {} <==", path.display());
+                }
                 println!("{text}");
-                Ok(())
+                printed = true;
             } else {
-                fs::write(&out, text + "\n").map_err(|e| e.to_string()).map(|()| eprintln!("done  {}", out.display()))
+                fs::write(&out, text + "\n").map_err(|e| e.to_string())?;
             }
+            Ok(t.duration)
         });
-        if let Err(error) = result {
-            failed += 1;
-            eprintln!("FAIL  {}: {error}", path.display());
+        match result {
+            Ok(audio) => progress.done(if stdout { path } else { &out }, audio, &engine.model),
+            Err(error) => {
+                failed += 1;
+                eprintln!("FAIL  {}: {error}", path.display());
+            }
         }
     }
     if failed > 0 {
