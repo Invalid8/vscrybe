@@ -5,6 +5,8 @@ and the project uses [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-07
+
 ### Added
 - `vscrybe transcribe` shows progress: an updating line in a terminal, or a plain line every 10% or 30 seconds
   when stderr goes to a pipe or log. Each file ends with how long the audio was and how long it took, which is
@@ -72,6 +74,7 @@ Renamed to **VScrybe** and rewritten as a native Rust app. Your sessions and dow
 
 First release (Python).
 
-[Unreleased]: https://github.com/Invalid8/vscrybe/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Invalid8/vscrybe/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/Invalid8/vscrybe/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/Invalid8/vscrybe/releases/tag/v0.3.0
 [0.2.0]: https://github.com/Invalid8/vscrybe/tree/177b7d3
